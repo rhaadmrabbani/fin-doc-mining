@@ -1,0 +1,2 @@
+IDReportdata.csv downloaded from https://www5.fdic.gov/idasp/advSearchLanding.asp (set search criterion "status" to "all" )
+banklist.csv downloaded from https://www.fdic.gov/bank/individual/failed/banklist.csv 

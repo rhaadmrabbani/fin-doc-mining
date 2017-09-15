@@ -1,0 +1,25 @@
+Trade
+Cleared 
+Uncleared
+Margin 
+Capital
+Derivatives
+Options
+Swaps
+Futures
+Contracts
+Hedging
+Exposure
+Risk Transfer
+Risk Mitigation
+Arbitrage
+Call Option
+Put Option
+
+Rule names:
+Volcker
+Liquidity coverage ratio (LCR)
+Basel III
+Basel II
+Net Capital Rule
+net stable funding ratio
