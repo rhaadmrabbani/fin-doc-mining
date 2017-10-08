@@ -101,7 +101,9 @@ def pdf_to_pages( file_path ) :
             if isinstance( element , LTTextBoxHorizontal ) :
                 lines = element._objs
                 for i , line in enumerate( lines ) :
-                    lines[ i ] = ''.join( [ c.get_text( ).encode('utf-8').upper( ) if isinstance( c , LTChar ) and ( fontname_to_bold[ c.fontname ] or 17.20880205278 < c.size < 17.20880205279 ) else c.get_text( ).encode('utf-8') for c in line._objs ] )
+                    lines[ i ] = ''.join( [ c.get_text( ).encode('utf-8').upper( )
+                                            if isinstance( c , LTChar ) and ( fontname_to_bold[ c.fontname ] or 17.20880205278 < c.size < 17.20880205279 )
+                                            else c.get_text( ).encode('utf-8') for c in line._objs ] ).replace( '\xc2\xa0' , ' ' ).replace( '\xe2\x80\x93' , '-' ).replace( '\xc2\xad' , '-' )
                 paras.append( Para( lines ) )
                 
         paras = [ para for para in paras if para.lines ]
@@ -120,12 +122,12 @@ def get_reg_exp_name( reg_exp_dict , text ) :
 
 header_res = { }
 header_res[ 'seekingalpha_date' ] = re.compile( r'^\d{1,2}/\d{1,2}/\d{2}(\d{2})?$' )
-header_res[ 'seekingalpha_title' ] = re.compile( r' \| Seeking Alpha$' )
+header_res[ 'seekingalpha_title' ] = re.compile( r' \| Seeking Alpha$' )
 header_res[ 'reuters_clientid' ] = re.compile( r'^CLIENT ID:' )
 header_res[ 'reuters_title' ] = re.compile( r'^(JANUARY |FEBRUARY |MARCH |APRIL |MAY |JUNE |JULY |AUGUST |SEPTEMBER |OCTOBER |NOVEMBER |DECEMBER )\d{2},' )
 header_res[ 'thomson_title' ] = re.compile( r'^Q\d \d{4} ' )
 header_res[ 'thomson_page' ] = re.compile( r'^Page \d+$' )
-header_res[ 'thomson_day' ] = re.compile( r'^(Sunday|monday|Tuesday|Wednesday|Thursday|Friday|Saturday)$' )
+header_res[ 'thomson_day' ] = re.compile( r'^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)$' )
 
 def extract_headers( pages ) :
     
@@ -201,6 +203,141 @@ def mend_split_paras( pages ) :
 
 
 
+'''
+
+
+def parse_text( text ) :
+    
+    pre_qna = pre_qna_re.search( text ).group( )
+    text = pre_qna_re.sub( '' , text )
+    text = copyright_re.sub( '' , text ) 
+    
+    m = speakers_re.search( pre_qna )
+    
+    if m :
+        
+        executives_text = m.group( 'executives' )
+        analysts_text = m.group( 'analysts' )
+        
+        executives = [ p.group( 1 ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re1.finditer( executives_text ) ]
+        analysts = [ p.group( 1 ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re1.finditer(analysts_text ) ]
+        
+        if not executives and not analysts :
+            executives = [ p.group( ).replace( '\xc2\xa0' , ' ' ).replace( '\xe2\x80\x93' , '-' ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re2.finditer( executives_text ) ]
+            analysts = [ p.group( ).replace( '\xc2\xa0' , ' ' ).replace( '\xe2\x80\x93' , '-' ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re2.finditer(analysts_text ) ]
+            
+        text = 'Executives:\n' + '\n'.join( executives ) + '\n\nAnalysts:\n' + '\n'.join( analysts ) + '\n\n' + text
+    
+    return text
+'''
+
+
+pre_qna_re1 = re.compile( r'^(Q U E S T I O N S   A N D   A N S W E R S|QUESTIONS AND ANSWERS|Questions and Answers|QUESTION-AND-ANSWER SESSION)$' )
+pre_qna_re2 = re.compile( r'OPERATOR: \(OPERATOR INSTRUCTIONS\)' )
+
+post_qna_re = re.compile( r'^(D I S C L A I M E R|\[Thomson Financial reserves the right|COPYRIGHT POLICY:)' , re.S )
+
+def extract_qna( paras ) :
+    
+    pre_qna = [ ]
+    qna = paras
+    post_qna = [ ]
+    
+    for i , para in enumerate( qna ) :
+        if pre_qna_re1.search( para.lines[ 0 ] ) :
+            if len( para.lines ) == 1 :
+                pre_qna = qna[ : i + 1 ]
+                qna = qna[ i + 1 : ]
+            else :
+                pre_qna = qna[ : i ] + [ Para( [ para.lines.pop( 0 ) ] ) ]
+                qna = qna[ i : ]
+            break
+        elif pre_qna_re2.search( para.lines[ 0 ] ) :
+            pre_qna = qna[ : i ]
+            qna = qna[ i : ]
+            break
+        
+    for i , para in reversed( list( enumerate( qna ) ) ) :
+        if post_qna_re.search( para.lines[ 0 ] ) :
+            post_qna = qna[ i : ]
+            qna = qna[ : i ]
+            break    
+        
+    return pre_qna , qna , post_qna
+    
+
+
+speakers_re = re.compile( r'\n(C O R P O R A T E   P A R T I C I P A N T S|CORPORATE PARTICIPANTS|Corporate Participants|EXECUTIVES)\n'
+                          + r'(?P<executives>.*)'
+                          + r'\n(C O N F E R E N C E   C A L L   P A R T I C I P A N T S|CONFERENCE CALL PARTICIPANTS|Conference Call Participants|ANALYSTS)\n'
+                          + r'(?P<analysts>.*)'
+                          + r'\n(P R E S E N T A T I O N|OVERVIEW|Presentation|OPERATOR)' , re.S )
+participants_re1 = re.compile( r'\*\s+([^-\*]*\s+-\s+[^\n\*]*)' )
+participants_re2 = re.compile( r'[^\n-]*\s+-\s+[^\n]+' )
+
+def extract_speakers_from_pre_qna( pre_qna ) :
+    
+    pre_qna = '\n\n'.join( [ '\n'.join( para.lines ) for para in pre_qna ] )
+    
+    m = speakers_re.search( pre_qna )
+    
+    if m :
+        
+        executives_text = m.group( 'executives' )
+        analysts_text = m.group( 'analysts' )
+        
+        executives = [ p.group( 1 ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re1.finditer( executives_text ) ]
+        analysts = [ p.group( 1 ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re1.finditer(analysts_text ) ]
+        
+        if not executives and not analysts :
+            executives = [ p.group( ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re2.finditer( executives_text ) ]
+            analysts = [ p.group( ).replace( '\r' , '' ).replace( '\n' , ' ' ).strip( ) for p in participants_re2.finditer(analysts_text ) ]
+            
+        return 'Executives:\n' + '\n'.join( executives ) + '\n\nAnalysts:\n' + '\n'.join( analysts )
+
+
+
+speaker_re1 = re.compile( r'^(?P<speaker>[A-Z][^a-z\s]+( &| [A-Z][^a-z\s]*)*):\s*(?P<speech>.*)$' )
+speaker_re2 = re.compile( r'^([A-Z][^a-z\s]+( &| [A-Z][^a-z\s]*)*\s+-|OPERATOR$)' )
+
+def prettify_qna( qna ) :
+    
+    mode = False
+    
+    i = 0
+    while i < len( qna ) :
+        m = speaker_re1.search( qna[ i ].lines[ 0 ] )
+        if m :
+            mode = True
+            speaker = m.group( 'speaker' )
+            speech = ' '.join( [ m.group( 'speech' ) ] + qna[ i ].lines[ 1 : ] )
+            qna[ i ].lines = [ speaker , speech ] if speech else [ speaker ]
+        elif mode and i > 0 :
+            qna[ i - 1 ].lines.append( ' '.join( qna[ i ].lines ) )
+            qna.pop( i )
+            continue
+        i += 1
+    
+    if mode : return qna
+    
+    i = 0
+    while i < len( qna ) :
+        m = speaker_re2.search( qna[ i ].lines[ 0 ] )
+        if m :
+            mode = True
+            speaker = qna[ i ].lines[ 0 ]
+            speech = ' '.join( qna[ i ].lines[ 1 : ] )
+            qna[ i ].lines = [ speaker , speech ] if speech else [ speaker ]
+        elif mode and i > 0 :
+            qna[ i - 1 ].lines.append( ' '.join( qna[ i ].lines ) )
+            qna.pop( i )
+            continue
+        i += 1
+    
+    return qna
+
+
+
 if __name__ == '__main__' :
     
     if not os.path.isdir( intermediate_rep_out_dir ) :
@@ -213,7 +350,7 @@ if __name__ == '__main__' :
         
         print file_name
         
-        pages = pdf_to_pages( data_dir + '/' + file_name )
+        pages = pdf_to_pages( data_dir + '/' + file_name )        
         extract_headers( pages )
         extract_footers( pages )
         mend_split_paras( pages )
@@ -224,9 +361,14 @@ if __name__ == '__main__' :
         out_file.close( )
         
         paras = [ para for page in pages for para in page.paras ]
+        pre_qna , qna , post_qna = extract_qna( paras )
+        speakers = extract_speakers_from_pre_qna( pre_qna )
+        qna = prettify_qna( qna )
+        
+        text = ( speakers + '\n\n' + '*' * 40 + '\n\n' if speakers else '' ) \
+            + '\n\n'.join( [ '\n'.join( para.lines ) for para in qna ] ) + '\n'
         
         out_file = open( out_dir + '/' + file_name[ : -4 ] + '.txt' , 'w' )        
-        for para in paras :
-            out_file.write( '\n'.join( para.lines ) + '\n\n' )
+        out_file.write( text )
         out_file.close( )        
         
