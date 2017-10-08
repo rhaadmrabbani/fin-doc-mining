@@ -298,7 +298,7 @@ def extract_speakers_from_pre_qna( pre_qna ) :
 
 
 speaker_re1 = re.compile( r'^(?P<speaker>[A-Z][^a-z\s]+( &| [A-Z][^a-z\s]*)*):\s*(?P<speech>.*)$' )
-speaker_re2 = re.compile( r'^([A-Z][^a-z\s]+( &| [A-Z][^a-z\s]*)*\s+-|OPERATOR$)' )
+speaker_re2 = re.compile( r'^[A-Z][^a-z\s]+( &| [A-Z][^a-z\s]*)*(\s+-|$)' )
 
 def prettify_qna( qna ) :
     
