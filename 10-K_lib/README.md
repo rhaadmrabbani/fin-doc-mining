@@ -19,3 +19,5 @@ Text extraction techniques are detailed at https://research.chicagobooth.edu/~/m
 THIS PROJECT
 
 Here we describe the components of the Python 2 library that are currently implemented.
+
+Coming soon.
