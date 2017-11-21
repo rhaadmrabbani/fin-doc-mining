@@ -9,6 +9,8 @@ Most research work in this area follow in the footsteps of Loughran and McDonald
 [1] Tim Loughran and Bill McDonald, "Textual Analysis in Accounting and Finance: A Survey", Journal of Accounting Research, June 2016.
 Text extraction techniques are detailed at https://research.chicagobooth.edu/~/media/8CF9E95E14144F52B32A687C33CD1557.pdf .
 
+<hr>
+
 
 INTRODUCTION
 
