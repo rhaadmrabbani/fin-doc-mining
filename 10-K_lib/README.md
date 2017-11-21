@@ -11,7 +11,6 @@ Text extraction techniques are detailed at https://research.chicagobooth.edu/~/m
 
 <hr>
 
-
 INTRODUCTION
 
 However, to reliably extract sections, numerous checks (some based on HTML markup) need to be in place to eliminate false positives for section start and end markers. Simplistic approaches tend not to work in a large percentage of cases. Also, for extracting unnumbered subsections, HTML markup information, that widely varies firm-to-firm and year-to-year, is a necessity. For sentence extraction, intelligent paragraph separation and merging is required while removing tags.
@@ -20,6 +19,7 @@ Many research groups have to come up with their own solutions to address such pr
 
 This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, specifically targetting text extraction, preprocessing and postprocessing of SEC forms (at least for the time being). We wish to keep adding a few solutions at a time to help with these processes, and hope that the solutions are general in scope and can be successfully applied to other kinds of texts. We will be delighted if this library can help researchers kickstart their journey in text mining SEC forms, and veteran researchers expand their scope of investigation.
 
+<hr>
 
 THIS PROJECT
 
