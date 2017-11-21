@@ -8,7 +8,7 @@ Most research work in this area follow in the footsteps of Loughran and McDonald
 
 Many research groups have to come up with their own solutions to address such problems. Good solutions should address a variety of actual cases. Also, a good solution is one where the code is viewable and can be easily customized.
 
-This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, specifically targetting text extraction, preprocessing and postprocessing of SEC forms (at least for the time being). We wish to keep adding a few solutions at a time to help with these processes, and hope that the solutions are general in scope and can be successfully applied to other kinds of texts. We will be delighted if this library can help researchers to start their journey in text mining SEC forms and veteran researchers to expand their scope of investigation.
+This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, specifically targetting text extraction, preprocessing and postprocessing of SEC forms (at least for the time being). We wish to keep adding a few solutions at a time to help with these processes, and hope that the solutions are general in scope and can be successfully applied to other kinds of texts. We will be delighted if this library can help researchers to kickstart their journey in text mining SEC forms, and veteran researchers to expand their scope of investigation.
 
 
 [1] Tim Loughran and Bill McDonald, "Textual Analysis in Accounting and Finance: A Survey", Journal of Accounting Research, June 2016.
