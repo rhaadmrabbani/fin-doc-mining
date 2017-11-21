@@ -6,14 +6,16 @@ SEC filings of US public companies can be easily accessed, by researchers, onlin
 
 Most research work in this area follow in the footsteps of Loughran and McDonald, the preeminent pioneers at applying textual analytics to SEC filings. Their approach of text extraction [1], removing all HTML markup and all tables identified as data tables, is simple and suffices for a simple extraction of all words from a document's text. However, to reliably extract sections, numerous checks (some based on HTML markup) need to be in place to eliminate false positives for section start and end markers. Simplistic approaches tend not to work in a large percentage of cases. Also, for extracting unnumbered subsections, HTML markup information, that widely varies firm-to-firm and year-to-year, is a necessity. For sentence extraction, intelligent paragraph separation and merging is required while removing tags.
 
+
+INTRODUCTION
+
 Many research groups have to come up with their own solutions to address such problems. Good solutions should address a variety of actual cases. Also, a good solution is one where the code is viewable and can be easily customized.
 
-This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, specifically targetting text extraction, preprocessing and postprocessing of SEC forms (at least for the time being). We wish to keep adding a few solutions at a time to help with these processes, and hope that the solutions are general in scope and can be successfully applied to other kinds of texts. We will be delighted if this library can help researchers to kickstart their journey in text mining SEC forms, and veteran researchers to expand their scope of investigation.
+This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, specifically targetting text extraction, preprocessing and postprocessing of SEC forms (at least for the time being). We wish to keep adding a few solutions at a time to help with these processes, and hope that the solutions are general in scope and can be successfully applied to other kinds of texts. We will be delighted if this library can help researchers kickstart their journey in text mining SEC forms, and veteran researchers expand their scope of investigation.
 
 
 [1] Tim Loughran and Bill McDonald, "Textual Analysis in Accounting and Finance: A Survey", Journal of Accounting Research, June 2016.
 Text extraction techniques are detailed at https://research.chicagobooth.edu/~/media/8CF9E95E14144F52B32A687C33CD1557.pdf .
-
 
 
 THIS PROJECT
