@@ -1,3 +1,5 @@
+
+
 BACKGROUND
 
 In the world of financial analytics, SEC (The US Securities and Exchange Commission) filings are receiving an increasing level of attention in recent times. Especially the 10-K form, which US public companies are required to file yearly by the SEC, is becoming a popular item for text mining research. In particular, sections 1A (risk factors) and 7 (management's discussion & analysis of financial condition & results of operations - MDA for short) of the 10K form carry risk-related and forward-looking statements that are of significant interest to reseachers.
@@ -8,7 +10,7 @@ Most research work in this area follow in the footsteps of Loughran and McDonald
 
 Many research groups have to come up with their own solutions to address such problems. Good solutions should address a variety of actual cases. Also, a good solution is one where the code is viewable and can be easily customized.
 
-This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, where we wish to keep adding a few solutions at a time to help in text extraction, preprocessing and postprocessing of SEC forms. We hope that the solutions are general in scope and can also be successfully applied to other kinds of texts.  
+This project is an open-source Python 2 library, started at Rensselaer Polytechnic Institute, Troy, NY, specifically targetting text extraction, preprocessing and postprocessing of SEC forms, at least initially. We wish to keep adding a few solutions at a time to help and hope that the solutions are general in scope and can be successfully applied to other kinds of texts. We will be delighted if this library can help researchers to start their journey in text mining SEC forms and veteran researchers to expand their scope of investigation.
 
 
 [1] Tim Loughran and Bill McDonald, "Textual Analysis in Accounting and Finance: A Survey", Journal of Accounting Research, June 2016.
@@ -18,4 +20,4 @@ Text extraction techniques are detailed at https://research.chicagobooth.edu/~/m
 
 THIS PROJECT
 
-Coming soon
+Here we describe the components of the Python 2 library that are currently implemented.
