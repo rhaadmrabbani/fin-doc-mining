@@ -21,12 +21,25 @@
 # SOFTWARE.
 
 
-import os , os.path
 import csv
 import re
+import os
+import urllib2
 
 
-# load and return text from load_path
+# HELPER FUNCTION(S) BEGIN
+    
+def prepare_save_path( save_path ) :
+
+    save_dir = os.path.dirname( save_path )
+
+    if not save_dir : pass # save_dir is current directory
+    elif not os.path.isdir( save_dir ) : os.makedirs( save_dir ) 
+    
+# HELPER FUNCTION(S) END
+
+
+# Utility function that loads and returns text from load_path
 
 def load_text( load_path , debug = False ) :
     
@@ -39,7 +52,7 @@ def load_text( load_path , debug = False ) :
     return text
 
 
-# save text to save_path
+# Utility function that saves text to save_path
 
 def save_text( save_path , text , debug = False ) :
     
@@ -52,8 +65,10 @@ def save_text( save_path , text , debug = False ) :
     save_file.close( )
 
 
-# load csv from load_path, filter columns by headers if headers provided,
-# and return csv as the tuple ( headers , rows )
+# Utility function that:
+# (i) loads csv from load_path, 
+# (ii) filters columns by headers if headers provided, and
+# (iii) returns csv as the tuple ( headers , rows )
 
 def load_csv( load_path , headers = None , debug = False ) :
     
@@ -73,7 +88,7 @@ def load_csv( load_path , headers = None , debug = False ) :
     return headers , rows
 
 
-# save headers and rows of csv to save_path
+# Utility function that saves headers and rows of csv to save_path
 
 def save_csv( save_path , headers = None , rows = None , debug = False ) :
     
@@ -91,12 +106,14 @@ def save_csv( save_path , headers = None , rows = None , debug = False ) :
     save_file.close( )
 
 
-# Helper functions
-    
-    
-def prepare_save_path( save_path ) :
+# Utility function that downloads raw text from an url and returns it
 
-    save_dir = os.path.dirname( save_path )
+def download( url , debug = False ) :
+    
+    if debug : print 'Downloading ' + url + ' ...'
+        
+    response = urllib2.urlopen( url )
+    raw = response.read( )
+    
+    return raw
 
-    if not save_dir : pass # save_dir is current directory
-    elif not os.path.isdir( save_dir ) : os.makedirs( save_dir ) 

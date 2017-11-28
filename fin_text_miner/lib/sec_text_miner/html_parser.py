@@ -72,7 +72,7 @@ tag_re = re.compile( r'(<(/?[!a-z][^\s<>/]*)([^>]*)>)' , re.I )
 
 html_re = re.compile( r'html' , re.I )
 
-nonhtml_inner_tag_re = re.compile( r'(?<=\n)\s*<[^<>]*>\s*(?=\n)' )
+nonhtml_inner_tag_re = re.compile( r'(?<=\n)\s*(<[^<>]*>|<page> +\d{1,3})\s*(?=\n)' ,re.I )
 
 nl_re = re.compile( r'\s*\r?\n\s*' )
 
@@ -178,6 +178,8 @@ def get_simplified_text( html ) :
 
 font_attr_caps_re = re.compile( r'text-transform:\s*uppercase' , re.I )
 
+font_attr_bold_re = re.compile( r'font-weight:\s*bold' , re.I )
+
 div_inline_re = re.compile( r'inline' , re.I )
 
 discard_non_inline_tag_re = re.compile( r'^(body|dd|dt|head|li|p|tbody|td|title|th|tr)$' , re.I )
@@ -190,6 +192,7 @@ keep_inline_tag_re = re.compile( r'^(a|b|big|em|h\d|i|small|strong|sub|sup|u)$' 
 def get_simplified_text_helper( html , caps = False ) :
 
     if html.tag == 'font' and font_attr_caps_re.search( html.attr ) : caps = True
+    if html.tag == 'font' and font_attr_bold_re.search( html.attr ) : html.tag = 'b'
     
     text = ''    
     
