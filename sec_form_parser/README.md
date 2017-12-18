@@ -1,10 +1,10 @@
 <h2>sec_form_parser</h2>
 
-sec_form_parser is a python library that can be used to download and parse SEC<sup>[1]</sup> forms. As of now, sec_form_parser is a Python 2 library. It includes parsing for only 10-K forms as well as download-related functions, and text and I/O-related utility functions.
+sec_form_parser is a Python library that can be used to download and parse SEC<sup>[1]</sup> forms. As of now, sec_form_parser is a Python 2 library. It includes parsing for only 10-K forms as well as download-related functions, and text and I/O-related utility functions.
 
 <sup>[1]</sup> The SEC (The US Securities and Exchange Commission) requires every publicly-traded US company to file form 10-K, an annual report to shareholders, and a host of other forms.
 
-We are a research group based at Rensselaer Polytechnic Institute in Troy, New York. We hope sec_form_parser
+We are a research group based at Rensselaer Polytechnic Institute in Troy, New York. We hope the sec_form_parser library will greatly benefit other research groups interested in textual analysis of 10-K forms and other SEC filings, especially those who may have faced problems in reliably extracting text and sections.
 
 <br>
 
