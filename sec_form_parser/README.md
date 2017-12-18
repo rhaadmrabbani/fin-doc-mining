@@ -4,7 +4,7 @@
 
 <sup>[1]</sup> The SEC (The US Securities and Exchange Commission) requires every publicly-traded US company to file form 10-K, an annual report to shareholders, and a host of other forms.
 
-We are a research group based at Rensselaer Polytechnic Institute in Troy, New York. We hope the <code>sec_form_parser</code> library will greatly benefit other research groups interested in textual analysis of 10-K forms and of other SEC filings, especially those who may have faced problems in reliably extracting text and sections.
+We are a research group based in Rensselaer Polytechnic Institute in Troy, New York. We hope the <code>sec_form_parser</code> library will greatly benefit other research groups interested in textual analysis of 10-K forms and of other SEC filings, especially those who may have faced problems in reliably extracting text and sections.
 
 <br>
 
