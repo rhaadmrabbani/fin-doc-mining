@@ -81,11 +81,11 @@ doc_pdf_re = re.compile( r'<pdf>.*?</pdf>' , re.I | re.S )
 
 
 
-# A 10-K form submission typically contains a 10-K doc and a host of other docs, and one giant text file containing all the docs.
-# Only 10-K and EX-13x docs are relevant (since EX-13x docs often contain the MDA section).
-# The URL for the giant text file is provided in SEC indexes, from which URLs to individual docs may be derived.
-#
-# Function that, given URL of the giant text file, downloads 10-K and EX-13x docs and returns a map from doc type to doc.
+# Each 10-K form filing consists of several documents.
+# SEC form filing index provides link to a giant text file that contains all documents for a given form filing instance.
+# We only need to download relevant documents form each selected 10-K form (documents of type 10-K and EX-13x) and save. 
+
+# Function that, given the link to the giant text file containing all documents, downloads only 10-K and EX-13x documents and returns a map from doc type to doc.
 
 def download_10K_docs( url_from_index ) :
     

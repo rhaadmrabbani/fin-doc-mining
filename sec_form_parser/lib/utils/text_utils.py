@@ -1,5 +1,6 @@
-# lib/utils/text_utils.py
-# Author: Rhaad M. Rabbani (2017)
+# text_utils.py
+# Author(s): Rhaad M. Rabbani (2017)
+
 # This file contains text utility functions, strings and regular expressions intended for use by the user.
 
 
@@ -46,12 +47,6 @@ def split_by_re( text , regexp ) :
 
 
 
-line_re = re.compile( r'(^|(?<=\n))( *<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n)|$)' , re.I | re.S )
-
-para_re = re.compile( r'(^|(?<=\n\n))( *<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n\n)|$)' , re.I | re.S )
-
-
-
 # Utility function that splits text into lines, preserving blocks, e.g. table, pre, etc
 
 def split_lines( text ) : return [ m.group( ) for m in line_re.finditer( text ) ]
@@ -82,36 +77,15 @@ def replace_special_chars( text ) : return special_char_re.sub( special_char_sub
 
 
 
-roman_re = re.compile( r'[ivx]+' )
+line_re = re.compile( r'(^|(?<=\n))( *<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n)|$)' , re.I | re.S )
 
-roman_map = { 'i' : '1' , 'ii' : '2' , 'iii' : '3' , 'iv' : '4' , 'v' : '5' , 'vi' : '6' , 'ix' : '9' , 'x' : '10' , 'xi' : '11' }
+para_re = re.compile( r'(^|(?<=\n\n))( *<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n\n)|$)' , re.I | re.S )
 
-roman_func = lambda m : roman_map[ m.group( ) ] if m.group( ) in roman_map else '?'
-
-
-
-# Utility function that converts number string to int - handles roman numerals
-
-def convert_str_to_int( num_str ) :
-    
-    num_str = roman_re.sub( roman_func , num_str.lower( ) )
-    
-    if not roman_re.search( num_str ) : return int( num_str )
-    else : return num_str
-    
     
 
 #######################################################
 ## Helper functions not intended for use by the user ##
 #######################################################
-
-
-
-special_char_re = re.compile( r'&(?P<code>.{1,6}?);' , re.S )
-
-special_char_map = dict( [ ( k , v ) for ks , v in [ ( [ 'nbsp' , '#160' , '#9' ] , ' ' ) , ( [ 'amp' , '#38' ] , '&' ) , ( [ '#43' ] , ' + ' ) , ( [ 'lt' , '#60' ] , '<' ) , ( [ 'gt' , '#62' ] , '>' ) ,
-                                                     ( [ '#91' ] , ' [ ' ) , ( [ '#93' ] , ' ] ' ) , ( [ '#95' ] , '_' ) , ( [ '&rsquo' , '#145' , '#146' , '#8216' , '#8217' ] , "'" ) ,
-                                                     ( [ '&ldquo' , '&rdquo' ,  'quot' , '#147' , '#148' , '#8220' , '#8221' ] , '"' ) , ( [ '#150' , '#151' , '#8212' ] , ' - ' ) ] for k in ks ] )
 
 
 
@@ -125,4 +99,34 @@ def special_char_sub_func( m ) :
     
     return sub
 
-    
+
+
+special_char_re = re.compile( r'&(?P<code>.{1,6}?);' , re.S )
+
+special_char_map = dict( [ ( k , v ) for ks , v in [ ( [ 'nbsp' , '#160' , '#9' ] , ' ' ) , ( [ 'amp' , '#38' ] , '&' ) , ( [ '#43' ] , ' + ' ) , ( [ 'lt' , '#60' ] , '<' ) , ( [ 'gt' , '#62' ] , '>' ) ,
+                                                     ( [ '#91' ] , ' [ ' ) , ( [ '#93' ] , ' ] ' ) , ( [ '#95' ] , '_' ) , ( [ '&rsquo' , '#145' , '#146' , '#8216' , '#8217' ] , "'" ) ,
+                                                     ( [ '&ldquo' , '&rdquo' ,  'quot' , '#147' , '#148' , '#8220' , '#8221' ] , '"' ) , ( [ '#150' , '#151' , '#8212' ] , ' - ' ) ] for k in ks ] )
+
+
+
+# MIT License
+#
+# Copyright (c) 2017 Rhaad M. Rabbani
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,  OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.

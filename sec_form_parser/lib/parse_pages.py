@@ -1,5 +1,13 @@
+# parse_pages.py
+# Author(s): Rhaad M. Rabbani (2017)
+
+# This file contains the page parser.
+
+
+
 import re
 from collections import Counter
+
 
 
 from utils.utils import *
@@ -9,20 +17,13 @@ from pre_parse import num_in_table_str
 
 
 
-page_sep_tag_re = re.compile( r'^\s*(<(page|[^<>]*?(' + page_break_attr_str + r')[^<>]*)>|[^\n]*<a>\s*Table\s+of\s+Contents\s*</a>[^\n]*)\s*$' , re.I )
-
-footer_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|continued\s+on\s+next\s+page)\s*$' , re.I )
-
-header_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|[^\n]*(continued)[^\n]*)\s*$' , re.I )
-
-page_num_line_res = [ re.compile( r'^\s*(- *)?(?P<page_num>' + page_num_str + r')( *-)?\s*$' , re.I ) ,
-                      re.compile( r'^\s*page +(?P<page_num>' + page_num_str + r')( +of +\d+)?\s*$' , re.I ) ]
-
-non_discardable_block_tag_re = re.compile( r'(^|(?<=\n))\s*<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)>\s*((?=\n)|$)' , re.I | re.S )
-
-broken_para_re = re.compile( r'[^\.>\s\'"][\s\'"]*$' )
+############################################
+## Functions intended for use by the user ##
+############################################
 
 
+
+# The page parser extracts pages (represented as page body, header, footer and page number) from the easy-to-read intermediate representation of a document.
 
 def parse_pages( text , debug = False ) :
     
@@ -103,7 +104,24 @@ def parse_pages( text , debug = False ) :
 
 
 
-collapsable_block_re = re.compile( r'\s(' + num_in_table_str + r')\s+(-+\s+)?(' + num_in_table_str + r')\s|\s(\d+\s+){3}' )
+page_sep_tag_re = re.compile( r'^\s*(<(page|[^<>]*?(' + page_break_attr_str + r')[^<>]*)>|[^\n]*<a>\s*Table\s+of\s+Contents\s*</a>[^\n]*)\s*$' , re.I )
+
+footer_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|continued\s+on\s+next\s+page)\s*$' , re.I )
+
+header_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|[^\n]*(continued)[^\n]*)\s*$' , re.I )
+
+page_num_line_res = [ re.compile( r'^\s*(- *)?(?P<page_num>' + page_num_str + r')( *-)?\s*$' , re.I ) ,
+                      re.compile( r'^\s*page +(?P<page_num>' + page_num_str + r')( +of +\d+)?\s*$' , re.I ) ]
+
+non_discardable_block_tag_re = re.compile( r'(^|(?<=\n))\s*<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)>\s*((?=\n)|$)' , re.I | re.S )
+
+broken_para_re = re.compile( r'[^\.>\s\'"][\s\'"]*$' )
+
+
+
+#######################################################
+## Helper functions not intended for use by the user ##
+#######################################################
 
 
 
@@ -155,11 +173,6 @@ def build_headers( pages ) :
                 page.text_segments.pop( 0 )
             else :
                 break
-
-
-
-texty_page_num_line_res = [ re.compile( r'^\s*(page +)?(?P<page_num>' + page_num_str + r')\s+(?P<text>.*?)\s*$' , re.I | re.S ) , 
-                            re.compile( r'^\s*(?P<text>.*?)\s+(page +)?(?P<page_num>' + page_num_str + r')\s*$' , re.I | re.S ) ]
 
 
 
@@ -215,10 +228,6 @@ def build_header_texts( pages ) :
 
 
 
-page_num_re = re.compile( r'^(?P<pre>.*?)(?P<num>\d+)$' )
-
-
-
 def page_num_adjacency_check( ( header_page_num0 , footer_page_num0 ) , ( header_page_num1 , footer_page_num1 ) ) :
     
     if not header_page_num0 and not header_page_num1 and footer_page_num0 and footer_page_num1 :
@@ -247,4 +256,36 @@ def print_page_nums( pages ) :
     page_nums = [ ( page.header_page_num , page.footer_page_num ) for page in pages if page.header_page_num or page.footer_page_num ]    
     groups = group_items( page_nums , page_num_adjacency_check )
     print 'numbered pages: [' + '; '.join( [ 'from {} to {}'.format( group[ 0 ] , group[ -1 ] )for group in groups ] ) + ']'
-                
+
+
+
+collapsable_block_re = re.compile( r'\s(' + num_in_table_str + r')\s+(-+\s+)?(' + num_in_table_str + r')\s|\s(\d+\s+){3}' )
+
+texty_page_num_line_res = [ re.compile( r'^\s*(page +)?(?P<page_num>' + page_num_str + r')\s+(?P<text>.*?)\s*$' , re.I | re.S ) , 
+                            re.compile( r'^\s*(?P<text>.*?)\s+(page +)?(?P<page_num>' + page_num_str + r')\s*$' , re.I | re.S ) ]
+
+page_num_re = re.compile( r'^(?P<pre>.*?)(?P<num>\d+)$' )
+
+
+
+# MIT License
+#
+# Copyright (c) 2017 Rhaad M. Rabbani
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,  OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.

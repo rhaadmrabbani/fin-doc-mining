@@ -1,3 +1,6 @@
+# classes.py
+# Author(s): Rhaad M. Rabbani (2017)
+
 # All classes used by this library are defined in this file.
 
 
@@ -53,28 +56,26 @@ class Page :
             text += '\n{0}\n\n{1}\n\n'.format( '\n'.join( [ segment.text for segment in self.footer ] ) , '=' * 40 )
         return text
         
-
-'''
-class Page :
-    
-    def __init__( self , text ) :        
-        self.text = text
-        self.headers = [ ]
-        self.footers = [ ]
-        self.header_page_num = ''
-        self.footer_page_num = ''
-        self.header_title = ''
         
-    def __repr__( self ) :
-        text = ''
-        if self.headers :
-            text += '[header]'
-            if self.header_page_num : text += '[page {}]'.format( self.header_page_num )
-            if self.header_title : text += str( [ self.header_title ] )
-            text += '\n\n{0}\n\n{1}\n\n'.format( '\n\n'.join( [ header for header in self.headers ] ) , '=' * 40 )
-        text += '{0}\n\n{1}\n\n'.format( self.text , '=' * 40 )
-        if self.footers :
-            text += '[footer]'
-            if self.footer_page_num : text += '[page {}]'.format( self.footer_page_num )
-            text += '\n\n{0}\n\n{1}\n\n'.format( '\n\n'.join( [ footer for footer in self.footers ] ) , '=' * 40 )
-        return text'''
+
+# MIT License
+#
+# Copyright (c) 2017 Rhaad M. Rabbani
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,  OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.

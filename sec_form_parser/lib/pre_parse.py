@@ -1,5 +1,13 @@
+# pre_parse.py
+# Author(s): Rhaad M. Rabbani (2017)
+
+# This file contains the pre-parsing function.
+
+
+
 import re
 import sys
+
 
 
 from utils.utils import *
@@ -8,13 +16,13 @@ from classes import HtmlNode
 
 
 
-is_html_re = re.compile( r'<(div|html|p|title)(\s[^<>*])?>|<!doctype>\s[^<>]*html' , re.I )
-
-tab_re = re.compile( r'\t' )
-cr_re = re.compile( r'\r' )
-multi_nl_re = re.compile( r'\n\s*\n' )
+############################################
+## Functions intended for use by the user ##
+############################################
 
 
+
+# The pre-parser generates an easy-to-read intermediate representation for any given document text.
 
 def pre_parse( text ) :
     
@@ -29,7 +37,17 @@ def pre_parse( text ) :
 
 
 
-childless_tag_re = re.compile( r'^(!--|br|hr|page)$' , re.I )
+is_html_re = re.compile( r'<(div|html|p|title)(\s[^<>*])?>|<!doctype>\s[^<>]*html' , re.I )
+
+tab_re = re.compile( r'\t' )
+cr_re = re.compile( r'\r' )
+multi_nl_re = re.compile( r'\n\s*\n' )
+
+
+
+#######################################################
+## Helper functions not intended for use by the user ##
+#######################################################
 
 
 
@@ -39,10 +57,6 @@ def pre_parse_html( text ) :
     text = get_interm_repr( html_tree )   
     
     return text
-
-
-
-non_nestable_tag_re = re.compile( r'^(' + non_discardable_block_tag_str + r'body|head|html|title|p)$' , re.I )
 
 
 
@@ -97,21 +111,6 @@ def get_interm_repr( html_tree ) :
 
 
 
-style_tag_str = r'a|b|big|em|h\d|i|small|strong|sub|sup|u'
-
-caps_font_attr_re = re.compile( r'text-transform:\s*uppercase' , re.I )
-bold_font_attr_re = re.compile( r'font-weight:\s*bold' , re.I )
-inline_div_re = re.compile( r'inline' , re.I )
-
-page_break_attr_re = re.compile( page_break_attr_str , re.I )
-false_page_break_attr_re = re.compile( r':\s*avoid' , re.I )
-
-non_discardable_block_tag_re = re.compile( r'^(' + non_discardable_block_tag_str + r')$' , re.I )
-discardable_block_tag_re = re.compile( r'^(body|dd|dt|head|html|li|p|tbody|td|th|title|tr)$' , re.I )
-style_tag_re = re.compile( r'^(' + style_tag_str + r')$' , re.I )
-
-
-
 def get_interm_repr_rec( node , caps = False ) :
     
     keep_attrs = page_break_attr_re.search( node.attrs ) and not false_page_break_attr_re.search( node.attrs )    
@@ -137,20 +136,6 @@ def get_interm_repr_rec( node , caps = False ) :
 
 
 
-untagged_non_html_page_sep0_re = re.compile( r'(^|(?<=\n)) *(?P<footer_page_num>' + page_num_str + ') *\n+ *(?P<header_page_num>page *' + page_num_str + ') *((?=\n)|$)' , re.I )
-untagged_non_html_page_sep0_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n{}\n\n'.format( m.group( 'footer_page_num' ) , m.group( 'header_page_num' ) )
-
-untagged_non_html_page_sep1_re = re.compile( r'(^|(?<=\n)) *<page *(?P<footer_page_num>' + page_num_str + ') *> *((?=\n)|$)' , re.I )
-untagged_non_html_page_sep1_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n'.format( m.group( 'footer_page_num' ) )
-
-num_in_table_str = r'\(\s*[\d\.,]+\s*\)|\$\s*[\d\.,]+|[\d\.,]+\s*%|\d+,\d+'
-line_in_table_str = r'( *|[^\n]* )' + num_in_table_str + r'(  +' + num_in_table_str + r')+ *'
-untagged_non_html_table_re = re.compile( r'(^|(?<=\n))' + line_in_table_str + r'(\n([^\n]*\n)?' + line_in_table_str + r')+((?=\n)|$)' , re.I )
-
-non_html_tag_re = re.compile( r'<(/?table|page)>' , re.I )
-
-
-
 def pre_parse_non_html( text ) :
     
     text = replace_special_chars( text )
@@ -168,3 +153,57 @@ def pre_parse_non_html( text ) :
     
     return text
 
+
+
+childless_tag_re = re.compile( r'^(!--|br|hr|page)$' , re.I )
+
+non_nestable_tag_re = re.compile( r'^(' + non_discardable_block_tag_str + r'body|head|html|title|p)$' , re.I )
+
+style_tag_str = r'a|b|big|em|h\d|i|small|strong|sub|sup|u'
+
+caps_font_attr_re = re.compile( r'text-transform:\s*uppercase' , re.I )
+bold_font_attr_re = re.compile( r'font-weight:\s*bold' , re.I )
+inline_div_re = re.compile( r'inline' , re.I )
+
+page_break_attr_re = re.compile( page_break_attr_str , re.I )
+false_page_break_attr_re = re.compile( r':\s*avoid' , re.I )
+
+non_discardable_block_tag_re = re.compile( r'^(' + non_discardable_block_tag_str + r')$' , re.I )
+discardable_block_tag_re = re.compile( r'^(body|dd|dt|head|html|li|p|tbody|td|th|title|tr)$' , re.I )
+style_tag_re = re.compile( r'^(' + style_tag_str + r')$' , re.I )
+
+untagged_non_html_page_sep0_re = re.compile( r'(^|(?<=\n)) *(?P<footer_page_num>' + page_num_str + ') *\n+ *(?P<header_page_num>page *' + page_num_str + ') *((?=\n)|$)' , re.I )
+untagged_non_html_page_sep0_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n{}\n\n'.format( m.group( 'footer_page_num' ) , m.group( 'header_page_num' ) )
+
+untagged_non_html_page_sep1_re = re.compile( r'(^|(?<=\n)) *<page *(?P<footer_page_num>' + page_num_str + ') *> *((?=\n)|$)' , re.I )
+untagged_non_html_page_sep1_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n'.format( m.group( 'footer_page_num' ) )
+
+num_in_table_str = r'\(\s*[\d\.,]+\s*\)|\$\s*[\d\.,]+|[\d\.,]+\s*%|\d+,\d+'
+line_in_table_str = r'( *|[^\n]* )' + num_in_table_str + r'(  +' + num_in_table_str + r')+ *'
+untagged_non_html_table_re = re.compile( r'(^|(?<=\n))' + line_in_table_str + r'(\n([^\n]*\n)?' + line_in_table_str + r')+((?=\n)|$)' , re.I )
+
+non_html_tag_re = re.compile( r'<(/?table|page)>' , re.I )
+
+
+
+# MIT License
+#
+# Copyright (c) 2017 Rhaad M. Rabbani
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,  OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
