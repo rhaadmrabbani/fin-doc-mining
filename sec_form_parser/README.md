@@ -1,10 +1,10 @@
-<h2>sec_form_parser</h2>
+<h2><code>sec_form_parser</code></h2>
 
-sec_form_parser is a Python library that can be used to download and parse SEC<sup>[1]</sup> forms. As of now, sec_form_parser is a Python 2 library. It includes parsing for only 10-K forms as well as download-related functions, and text and I/O-related utility functions.
+<code>sec_form_parser</code> is a Python library that can be used to download and parse SEC<sup>[1]</sup> forms. As of now, <code>sec_form_parser</code> is a Python 2 library. It includes parsing for only 10-K forms as well as download-related functions, and text and I/O-related utility functions.
 
 <sup>[1]</sup> The SEC (The US Securities and Exchange Commission) requires every publicly-traded US company to file form 10-K, an annual report to shareholders, and a host of other forms.
 
-We are a research group based at Rensselaer Polytechnic Institute in Troy, New York. We hope the sec_form_parser library will greatly benefit other research groups interested in textual analysis of 10-K forms and of other SEC filings, especially those who may have faced problems in reliably extracting text and sections.
+We are a research group based at Rensselaer Polytechnic Institute in Troy, New York. We hope the <code>sec_form_parser</code> library will greatly benefit other research groups interested in textual analysis of 10-K forms and of other SEC filings, especially those who may have faced problems in reliably extracting text and sections.
 
 <br>
 
@@ -23,7 +23,7 @@ To get started, you may run the following files in the given order:
 The 10-K forms have to be first downloaded from SEC's site before they can be parsed.
 We do not provide any content downloaded from SEC's site, but our code allows the user to easily download desired 10-K content.
 SEC assigns a unique id called CIK to each company.
-download_all.py reads in CIKs from an input file and proceeds to download 10-K forms for those CIKs.
+<code>download_all.py</code> reads in CIKs from an input file and proceeds to download 10-K forms for those CIKs.
 
 In particular, it makes use of the following function calls:
 
@@ -40,10 +40,10 @@ function that, given the link to the giant text file containing all documents fo
 
 <h2>Parsing</h2>
 
-parse_all.py expects all downloaded 10-K forms it has to process in a single directory.
-You may choose to use download_all.py to obtain the downloads, or you may use any existing downloaded 10-K files you have in your system.
+<code>parse_all.py</code> expects all downloaded 10-K forms it has to process in a single directory.
+You may choose to use <code>download_all.py</code> to obtain the downloads, or you may use any existing downloaded 10-K files you have in your system.
 
-Before initiating parsing, parse_all.py calls the function:
+Before initiating parsing, <code>parse_all.py</code> calls the function:
 
 <code>extract_10K_docs</code>
 function that extracts relevant document(s) (of type 10-K and EX-13x) from a multi-document 10-K form or an individual 10-K or EX-13x document.
