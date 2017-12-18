@@ -10,7 +10,7 @@ We are a research group based in Rensselaer Polytechnic Institute in Troy, New Y
 
 <h2>Getting Started</h2>
 
-To get started, simply copy the <code>sec_form_parser</code> folder to your local machine.
+To get started, simply copy the <code>sec_form_parser</code> folder to your local machine. Make sure you have a Python 2 environment set up.
 You may run the following files in the given order:
 <ol>
 <li><code>examples/download_all.py</code></li>
