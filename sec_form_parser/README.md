@@ -12,8 +12,8 @@ We are a research group based at Rensselaer Polytechnic Institute in Troy, New Y
 
 To get started, you may run the following files in the given order:
 <ol>
-<li>examples/download_all.py</li>
-<li>run examples/parse_all.py</li>
+<li><code>examples/download_all.py</code></li>
+<li><code>run examples/parse_all.py</code></li>
 </ol>
 
 <br>
