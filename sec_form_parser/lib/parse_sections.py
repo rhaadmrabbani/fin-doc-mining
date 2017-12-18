@@ -3,7 +3,8 @@ from collections import defaultdict
 
 
 from utils.utils import *
-from parse_pages import para_re , maskable_re
+from utils.text_utils import *
+from parse_pages import para_re
 
 
 
@@ -14,13 +15,13 @@ item_re = re.compile( r'item' , re.I )
 
 def parse_sections( pages , debug = False ) :
     
-    for page in pages : page.paras = [ m.group( ) for m in para_re.finditer( page.text ) ]
+    for page in pages : page.paras = split_paras( page.text )
     
     matches = [ ]
     
     for i , page in enumerate( pages ) :
         for j , para in enumerate( page.paras ) :
-            text = maskable_re.sub( '' , para )
+            text = tag_re.sub( '' , para )
             m = section_header0_re.match( text )
             if m and len( list( item_re.finditer( text ) ) ) <= 1 : matches.append( ( m , i , j , para ) )
     
@@ -38,7 +39,7 @@ def parse_sections( pages , debug = False ) :
             item_num = item_num.upper( )
             if i1 == i2 : paras = pages[ i1 ].paras[ j1 + 1 : j2 ]
             else : paras = pages[ i1 ].paras[ j1 + 1 : ] + [ para for page in pages[ i1 + 1 : i2 ] for para in page.paras ] + pages[ i2 ].paras[ : j2 ]
-            text = '\n\n'.join( paras )
+            text = join_paras( paras )
             item_num_to_text_map[ item_num ] = ( item_num_to_text_map[ item_num ] + '\n\n' + text ).strip( '\n' )
             
     return item_num_to_text_map

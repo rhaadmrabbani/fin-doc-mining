@@ -2,6 +2,11 @@
 
 
 
+from utils.utils import *
+from utils.text_utils import *
+
+
+
 class HtmlNode :
     
     def __init__( self , parent , tag , attrs ) :
@@ -13,6 +18,43 @@ class HtmlNode :
 
 
 
+class TextSegment :
+    
+    def __init__( self , text ) :
+        self.text = text
+        self.tag_masked_text = tag_re.sub( '' , text )
+        self.is_page_break = False
+        self.is_footer = False
+        self.is_header = False
+        self.page_num = ''
+
+
+
+class Page :
+    
+    def __init__( self ) :
+        self.text = ''
+        self.text_segments = [ ]
+        self.header = [ ]
+        self.header_page_num = ''
+        self.footer = [ ]
+        self.footer_page_num = ''
+        
+    def __repr__( self ) :
+        text = ''
+        if self.header :
+            text += '[header]'
+            if self.header_page_num : text += '[page {}]'.format( self.header_page_num )
+            text += '\n{0}\n\n{1}\n\n'.format( '\n'.join( [ segment.text for segment in self.header ] ) , '=' * 40 )        
+        text += '{0}\n\n{1}\n\n'.format( self.text , '=' * 40 )
+        if self.footer :
+            text += '[footer]'
+            if self.footer_page_num : text += '[page {}]'.format( self.footer_page_num )
+            text += '\n{0}\n\n{1}\n\n'.format( '\n'.join( [ segment.text for segment in self.footer ] ) , '=' * 40 )
+        return text
+        
+
+'''
 class Page :
     
     def __init__( self , text ) :        
@@ -35,4 +77,4 @@ class Page :
             text += '[footer]'
             if self.footer_page_num : text += '[page {}]'.format( self.footer_page_num )
             text += '\n\n{0}\n\n{1}\n\n'.format( '\n\n'.join( [ footer for footer in self.footers ] ) , '=' * 40 )
-        return text
+        return text'''

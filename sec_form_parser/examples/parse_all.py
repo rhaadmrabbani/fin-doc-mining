@@ -9,6 +9,7 @@ import sys
 sys.path.append('../lib')
 from utils.utils import *
 from utils.io_utils import *
+from utils.text_utils import *
 from download import extract_10K_docs
 from pre_parse import pre_parse
 from parse_pages import parse_pages
@@ -46,10 +47,10 @@ if __name__ == '__main__' :
         pages = parse_pages( text , debug = True )
         text = ''.join( [ str( page ) for page in pages ] )
         save_text( paginated_repr_dir + '/' + filename , text , debug = True )
-        if not filename.endswith( '_10-K.txt' ) : continue
-        item_num_to_text_map = parse_sections( pages , debug = True )
-        for item_num , item_text in item_num_to_text_map.iteritems( ) :
-            save_text( '{}/{}/{}.txt'.format( sections_dir , filename[ : -4 ] , item_num ) , item_text , debug = True )        
+        if filename.endswith( '_10-K.txt' ) :
+            item_num_to_text_map = parse_sections( pages , debug = True )
+            for item_num , item_text in item_num_to_text_map.iteritems( ) :
+                save_text( '{}/{}/{}.txt'.format( sections_dir , filename[ : -4 ] , item_num ) , item_text , debug = True )        
         print
         
         

@@ -3,81 +3,118 @@ from collections import Counter
 
 
 from utils.utils import *
-from classes import Page
-from pre_parse import page_break_attr_str , table_re , tag_re , num_in_table_str , page_num_str , style_tag_str
+from utils.text_utils import *
+from classes import *
+from pre_parse import num_in_table_str
 
 
 
-page_sep_tag_res = [ re.compile( r'(^|(?<=\n)) *<(page|[^<>]*?(' + page_break_attr_str + r')[^<>]*)> *((?=\n)|$)' , re.I ) ,
-                     re.compile( r'(^|(?<=\n)) *<(hr\s[^<>]*)?> *((?=\n)|$)' , re.I ) ]
+page_sep_tag_re = re.compile( r'^\s*(<(page|[^<>]*?(' + page_break_attr_str + r')[^<>]*)>|[^\n]*<a>\s*Table\s+of\s+Contents\s*</a>[^\n]*)\s*$' , re.I )
+
+footer_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|continued\s+on\s+next\s+page)\s*$' , re.I )
+
+header_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|[^\n]*(continued)[^\n]*)\s*$' , re.I )
+
+page_num_line_res = [ re.compile( r'^\s*(- *)?(?P<page_num>' + page_num_str + r')( *-)?\s*$' , re.I ) ,
+                      re.compile( r'^\s*page +(?P<page_num>' + page_num_str + r')( +of +\d+)?\s*$' , re.I ) ]
+
+non_discardable_block_tag_re = re.compile( r'(^|(?<=\n))\s*<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)>\s*((?=\n)|$)' , re.I | re.S )
+
+broken_para_re = re.compile( r'[^\.>\s\'"][\s\'"]*$' )
 
 
 
 def parse_pages( text , debug = False ) :
     
-    pages = [ ]
+    text = collapse_blocks( text )
     
-    for page_sep_tag_re in page_sep_tag_res :
-        temp_pages = split_pages( text , page_sep_tag_re )
-        if len( temp_pages ) < len( pages ) : continue
-        pages = temp_pages
-        if len( pages ) > 1 : pages = gather_meta_data( pages )
-        if len( pages ) > 20 : break
+    segments = [ TextSegment( line ) for line in split_lines( text ) ]
+    
+    for segment in segments :
+        if page_sep_tag_re.match( segment.text ) : segment.is_page_break = True
+        if footer_re.match( segment.text ) : segment.is_footer = True
+        if header_re.match( segment.text ) : segment.is_header = True
+        for page_num_line_re in page_num_line_res :
+            m = page_num_line_re.match( segment.tag_masked_text )
+            if m : segment.page_num = m.group( 'page_num' ) ; break
+    
+    # separate pages using footer segments    
+    pages = [ Page( ) ]            
+    for segment in segments :
+        if segment.is_page_break or segment.is_footer :
+            pages[ -1 ].footer.append( segment )
+            pages.append( Page( ) )
+        else :
+            pages[ -1 ].text_segments.append( segment )    
+    
+    build_footers( pages )
+    changed = build_footer_page_nums( pages )
+    if changed : build_footers( pages )
+    
+    # remove empty pages
+    i = 1
+    while i < len( pages ) :
+        if not pages[ i ].text_segments and ( not pages[ i - 1 ].footer_page_num or not pages[ i ].footer_page_num ) :
+            pages[ i - 1 ].footer_page_num = pages[ i - 1 ].footer_page_num or pages[ i ].footer_page_num
+            pages[ i - 1 ].footer += pages[ i ].footer
+            pages.pop( i )
+            continue
+        i += 1
+    
+    # merge pages across false page seps    
+    i = 0
+    while i + 1 < len( pages ) :
+        if not pages[ i ].footer_page_num and not [ 1 for segment in pages[ i ].footer if segment.is_page_break ] :
+            pages[ i + 1 ].text_segments = pages[ i ].text_segments + [ TextSegment( '' ) ] + pages[ i ].footer + [ TextSegment( '' ) ] + pages[ i + 1 ].text_segments
+            pages.pop( i )
+            continue
+        i += 1
+        
+    build_footers( pages )
+    
+    while True :
+        build_headers( pages )
+        changed = build_header_texts( pages )
+        if not changed : break
+    
+    # mend paragraphs broken across page seps
+    for page in pages :
+        page.text = join_lines( [ segment.text for segment in page.text_segments ] )
+        page.text_segments = [ TextSegment( para ) for para in split_paras( page.text ) ]
+    i = 0
+    while i + 1 < len( pages ) :
+        if pages[ i ].text_segments and pages[ i + 1 ].text_segments and broken_para_re.search( pages[ i ].text_segments[ -1 ].text ) :
+            pages[ i ].text_segments[ -1 ].text += '\n' + pages[ i + 1 ].text_segments[ 0 ].text
+            pages[ i + 1 ].text_segments.pop( 0 )
+        i += 1
+    
+    # remove new lines within paragraphs
+    for page in pages :
+        for segment in page.text_segments :
+            if not non_discardable_block_tag_re.match( segment.text ) : segment.text = junky_nl_re.sub( ' ' , segment.text )
+    
+    for page in pages : page.text = join_paras( [ segment.text for segment in page.text_segments ] )
     
     if debug :
         print '{} pages'.format( len( pages ) ) 
-        print [ ( page.header_page_num , page.footer_page_num ) for page in pages if page.header_page_num or page.footer_page_num ]  
+        print_page_nums( pages )
     
     return pages
 
 
 
-def split_pages( text , page_sep_tag_re ) :
+collapsable_block_re = re.compile( r'\s(' + num_in_table_str + r')\s+(-+\s+)?(' + num_in_table_str + r')\s|\s(\d+\s+){3}' )
+
+
+
+def collapse_blocks( text ) :
     
-    pages = [ ]
-    
-    segments = split_by_re( text , page_sep_tag_re )    
-    for i , segment in enumerate( segments ) :
-        segment = segment.strip( '\n' )
-        if i % 2 == 0 :
-            segment = mend_table( segment )
-            segment = discard_tables( segment )
-            if i == 0 or segment.strip( ) : pages.append( Page( segment ) )
-        else :
-            pages[ -1 ].footers.append( segment )    
-    
-    return pages
-
-
-
-table_start_re = re.compile( r'<table(\s[^<>]*)?>.*?((?P<end_tag></table>)|$)' , re.I | re.S )
-table_end_re = re.compile( r'^.*?(<table|(?P<end_tag></table>))' , re.I | re.S )
-
-
-
-def mend_table( text ) :
-    
-    ms = list( table_start_re.finditer( text ) )
-    if ms and not ms[ -1 ].group( 'end_tag' ) : text += '\n\n</table>'
-    
-    ms = list( table_end_re.finditer( text ) )
-    if ms and ms[ 0 ].group( 'end_tag' ) : text = '<table>\n\n' + text
-    
-    return text
-
-
-
-discardable_table_re = re.compile( r'\s(' + num_in_table_str + r') +(' + num_in_table_str + r')\s|((?<=\n)|^) *(' + num_in_table_str + r'|\$|%|\(|\)) *\n+ *(' + num_in_table_str + r'|\$|%|\(|\)) *?((?=\n)|$)' )
-
-
-
-def discard_tables( text ) :
-    
-    segments = split_by_re( text , table_re )
+    segments = split_by_re( text , non_discardable_block_tag_re )
     for i , segment in enumerate( segments ) :
         if i % 2 == 1 :
+            tag = non_discardable_block_tag_re.match( segment ).group( 'tag' )
             segment = tag_re.sub( '' , segment )
-            if len( list( discardable_table_re.finditer( segment ) ) ) > 1 : segments[ i ] = '<table>\n\n...\n\n</table>'
+            if len( list( collapsable_block_re.finditer( segment ) ) ) > 1 : segments[ i ] = '\n\n<{0}>\n\n...\n\n</{0}>\n\n'.format( tag )
             
     text = ''.join( segments )
     
@@ -85,133 +122,129 @@ def discard_tables( text ) :
 
 
 
-line_re = re.compile( r'(^|(?<=\n))( *<table(\s[^<>]*)?>.*?</table> *| *<[^<>]*> *|.*?)((?=\n)|$)' , re.I | re.S )
-para_re = re.compile( r'(^|(?<=\n\n))( *<table(\s[^<>]*)?>.*?</table> *|.*?)((?=\n\n)|$)' , re.I | re.S )
-
-#maskable_re = re.compile( r'(^|(?<=\n))[^\n]*?<(?P<tag>small|sub|sup)(\s[^<>]*)?>.*?</(?P=tag)>[^\n]*((?=\n)|$)|</?(' + style_tag_str + r'|table)>' , re.I | re.S )
-maskable_re = re.compile( r'</?(' + style_tag_str + r'|table)>' , re.I | re.S )
-
-page_num_text_str = r'\S[^\n<>]*?'
-
-header_footer_re = re.compile( r'^\s*[^\n]*<a>\s*Table\s+of\s+Contents\s*</a>[^\n]*?$|^\s*<(hr\s[^<>]*)?>\s*$' , re.I )
-
-page_num_line_res = [ re.compile( r'^\s*(- *)?(?P<page_num>' + page_num_str + r')( *-)?\s*$' , re.I ) ,
-                      re.compile( r'^\s*page +(?P<page_num>' + page_num_str + r')( +of +\d+)?\s*$' , re.I ) ]
-
-texty_page_num_line_res = [ re.compile( r'^\s*(?P<page_num>' + page_num_str + r')\s+(?P<text>' + page_num_text_str + r')\s*$' , re.I ) ,
-                            re.compile( r'^\s*(?P<text>' + page_num_text_str + r')\s+(?P<page_num>' + page_num_str + r')\s*$' , re.I ) , 
-                            re.compile( r'^\s*page +(?P<page_num>' + page_num_str + r')\s+(?P<text>.*?)\s*$' , re.I | re.S ) , 
-                            re.compile( r'^\s*(?P<text>.*?)\s+page +(?P<page_num>' + page_num_str + r')\s*$' , re.I | re.S ) ]
-
-continued_title_re = re.compile( r'\(continued\)|- *continued' , re.I )
-
-
-
-def gather_meta_data( pages ) :
-    
-    
-    # gather page numbers, headers and footers
-    
-    for page in pages : page.lines = [ m.group( ) for m in line_re.finditer( page.text ) ]
+def build_footers( pages ) :  
     
     for page in pages :
-        while page.lines :
-            changed = False
-            m = header_footer_re.search( page.lines[ -1 ] )
-            if m or not maskable_re.sub( '' , page.lines[ -1 ] ).strip( ) :
-                page.footers = [ page.lines[ -1 ] ] + page.footers
-                page.lines.pop( -1 )
-                while page.lines and not page.lines[ -1 ].strip( ) : page.lines.pop( -1 )                                
-                continue
-            m = header_footer_re.search( page.lines[ 0 ] )
-            if m or not maskable_re.sub( '' , page.lines[ 0 ] ).strip( ) :
-                page.headers.append( page.lines[ 0 ] )
-                page.lines.pop( 0 )
-                while page.lines and not page.lines[ 0 ].strip( ) : page.lines.pop( 0 )                                
-                continue
-            for page_num_line_re in page_num_line_res :
-                m = page_num_line_re.search( maskable_re.sub( '' , page.lines[ -1 ] ) )
-                if m :
-                    page.footers = [ page.lines[ -1 ] ] + page.footers
-                    page.lines.pop( -1 )
-                    while page.lines and not page.lines[ -1 ].strip( ) : page.lines.pop( -1 )
-                    if not page.footer_page_num : page.footer_page_num = m.group( 'page_num' )
-                    changed = True
-                    break
-                m = page_num_line_re.search( maskable_re.sub( '' , page.lines[ 0 ] ) )
-                if m :
-                    page.headers.append( page.lines[ 0 ] )
-                    page.lines.pop( 0 )
-                    while page.lines and not page.lines[ 0 ].strip( ) : page.lines.pop( 0 )
-                    if not page.header_page_num : page.header_page_num = m.group( 'page_num' )
-                    changed = True
-                    break
-            if changed : continue
-            break
+        while page.text_segments :
+            if not page.text_segments[ -1 ].text.strip( ) :
+                page.text_segments.pop( -1 )
+            elif page.text_segments[ -1 ].is_footer :
+                page.footer = [ page.text_segments[ -1 ] ] + page.footer
+                page.text_segments.pop( -1 )
+            elif not page.footer_page_num and page.text_segments[ -1 ].page_num :
+                page.footer_page_num = page.text_segments[ -1 ].page_num
+                page.footer = [ page.text_segments[ -1 ] ] + page.footer
+                page.text_segments.pop( -1 )
+            else :
+                break
+
+
+
+def build_headers( pages ) :
+    
+    for page in pages :
+        while page.text_segments :
+            if not page.text_segments[ 0 ].text.strip( ) :
+                page.text_segments.pop( 0 )
+            elif page.text_segments[ 0 ].is_header :
+                page.header = page.header + [ page.text_segments[ 0 ] ]
+                page.text_segments.pop( 0 )
+            elif not page.header_page_num and page.text_segments[ 0 ].page_num :
+                page.header_page_num = page.text_segments[ 0 ].page_num
+                page.header = page.header + [ page.text_segments[ 0 ] ]
+                page.text_segments.pop( 0 )
+            else :
+                break
+
+
+
+texty_page_num_line_res = [ re.compile( r'^\s*(page +)?(?P<page_num>' + page_num_str + r')\s+(?P<text>.*?)\s*$' , re.I | re.S ) , 
+                            re.compile( r'^\s*(?P<text>.*?)\s+(page +)?(?P<page_num>' + page_num_str + r')\s*$' , re.I | re.S ) ]
+
+
+
+def build_footer_page_nums( pages ) :
     
     text_counter = Counter( ) 
+    
     for page in pages :
-        if page.lines :
-            for line in ( [ page.lines[ 0 ] ] + [ page.lines[ -1 ] ] if len( page.lines ) > 1 else page.lines ) :
-                line = maskable_re.sub( '' , line )
-                for page_num_line_re in texty_page_num_line_res :
-                    m = page_num_line_re.search( line )
-                    if m : text_counter[ ''.join( m.group( 'text' ).lower( ).split( ) ) ] += 1
+        if not page.footer_page_num and page.text_segments :
+            page.text_segments[ -1 ].temp_page_num = ''
+            page.text_segments[ -1 ].temp_page_num_text = ''            
+            for page_num_line_re in texty_page_num_line_res :
+                m = page_num_line_re.match( page.text_segments[ -1 ].tag_masked_text )
+                if m :
+                    page.text_segments[ -1 ].temp_page_num = m.group( 'page_num' )
+                    page.text_segments[ -1 ].temp_page_num_text = ''.join( m.group( 'text' ).lower( ).split( ) )
+                    text_counter[ page.text_segments[ -1 ].temp_page_num_text ] += 1
+                    break
     
-    if text_counter :    
-        text , max_count = text_counter.most_common( 1 )[ 0 ]
-        valid_texts = [ text for text , count in text_counter.iteritems( ) if count >= ( max_count + 1 ) / 2 > 1 ]        
-        for page in pages :
-            while page.lines :
-                changed = False
-                for page_num_line_re in texty_page_num_line_res :
-                    m = page_num_line_re.search( maskable_re.sub( '' , page.lines[ -1 ] ) )
-                    if m and ''.join( m.group( 'text' ).lower( ).split( ) ) in valid_texts :
-                        page.footers = [ page.lines[ -1 ] ] + page.footers
-                        page.lines.pop( -1 )
-                        while page.lines and not page.lines[ -1 ].strip( ) : page.lines.pop( -1 )
-                        if not page.footer_page_num : page.footer_page_num = m.group( 'page_num' )
-                        changed = True
-                        break
-                    m = page_num_line_re.search( maskable_re.sub( '' , page.lines[ 0 ] ) )
-                    if m and ''.join( m.group( 'text' ).lower( ).split( ) ) in valid_texts :
-                        page.headers.append( page.lines[ 0 ] )
-                        page.lines.pop( 0 )
-                        while page.lines and not page.lines[ 0 ].strip( ) : page.lines.pop( 0 )
-                        if not page.header_page_num : page.header_page_num = m.group( 'page_num' )
-                        changed = True
-                        break              
-                if changed : continue
-                break
+    if not text_counter : return pages    
     
-    for page in pages : page.text = '\n'.join( page.lines )
+    text , max_count = text_counter.most_common( 1 )[ 0 ]
+    valid_texts = [ text for text , count in text_counter.iteritems( ) if count >= ( max_count + 1 ) / 2 > 1 ] 
+
+    for page in pages :
+        if not page.footer_page_num and page.text_segments and page.text_segments[ -1 ].temp_page_num and page.text_segments[ -1 ].temp_page_num_text in valid_texts :
+            page.footer_page_num = page.text_segments[ -1 ].temp_page_num
+            page.footer = [ page.text_segments[ -1 ] ] + page.footer
+            page.text_segments.pop( -1 )                    
+
+
+
+def build_header_texts( pages ) :
     
+    changed = False
     
-    # gather titles in headers
+    text_counter = Counter( ) 
     
-    for page in pages : page.paras = [ m.group( ) for m in para_re.finditer( page.text ) ]
+    for page in pages :
+        if page.text_segments :
+            text_counter[ ''.join( page.text_segments[ 0 ].text.lower( ).split( ) ) ] += 1
+            
+    valid_texts = [ text for text , count in text_counter.iteritems( ) if count > 1 ] 
     
-    while True :
+    for page in pages :
+        if page.text_segments :
+            if ''.join( page.text_segments[ 0 ].text.lower( ).split( ) ) in valid_texts :
+                page.header = page.header + [ page.text_segments[ 0 ] ]
+                page.text_segments.pop( 0 )
+                changed = True
     
-        text_counter = Counter( )
-        for page in pages :
-            if page.paras :
-                text = ''.join( page.paras[ 0 ].split( ) )
-                masked_text = maskable_re.sub( '' , text ).strip( )
-                text = text.lower( )
-                if text != '<table>...</table>' and masked_text and masked_text[ 0 ].isupper( ) : text_counter[ text ] += 1
-        
-        if not text_counter : break
-        header_titles = [ text for text , count in text_counter.iteritems( ) if count > 1 ]
-        if not header_titles : break
-        
-        for page in pages :
-            if page.paras :
-                if continued_title_re.search( page.paras[ 0 ] ) or ''.join( page.paras[ 0 ].lower( ).split( ) ) in header_titles :
-                    page.headers.append( page.paras[ 0 ] )
-                    page.header_title = ( page.header_title + '\n\n' + page.paras[ 0 ] ).strip( '\n' )
-                    page.paras.pop( 0 )
+    return changed
+
+
+
+page_num_re = re.compile( r'^(?P<pre>.*?)(?P<num>\d+)$' )
+
+
+
+def page_num_adjacency_check( ( header_page_num0 , footer_page_num0 ) , ( header_page_num1 , footer_page_num1 ) ) :
+    
+    if not header_page_num0 and not header_page_num1 and footer_page_num0 and footer_page_num1 :
+        m0 = page_num_re.match( footer_page_num0 )
+        m1 = page_num_re.match( footer_page_num1 )
+        return m0.group( 'pre' ) == m1.group( 'pre' ) and int( m0.group( 'num' ) ) + 1 == int( m1.group( 'num' ) )
+    
+    if header_page_num0 and header_page_num1 and not footer_page_num0 and not footer_page_num1 :
+        m0 = page_num_re.match( header_page_num0 )
+        m1 = page_num_re.match( header_page_num1 )
+        return m0.group( 'pre' ) == m1.group( 'pre' ) and int( m0.group( 'num' ) ) + 1 == int( m1.group( 'num' ) )    
+
+    if header_page_num0 and header_page_num1 and footer_page_num0 and footer_page_num1 :
+        mh0 = page_num_re.match( header_page_num0 )
+        mh1 = page_num_re.match( header_page_num1 )
+        mf0 = page_num_re.match( footer_page_num0 )
+        mf1 = page_num_re.match( footer_page_num1 )        
+        return mh0.group( 'pre' ) == mh1.group( 'pre' ) and int( mh0.group( 'num' ) ) + 1 == int( mh1.group( 'num' ) ) \
+               and mf0.group( 'pre' ) == mf1.group( 'pre' ) and int( mf0.group( 'num' ) ) + 1 == int( mf1.group( 'num' ) ) 
+
+    return False
+
+
+def print_page_nums( pages ) :
+    
+    page_nums = [ ( page.header_page_num , page.footer_page_num ) for page in pages if page.header_page_num or page.footer_page_num ]    
+    groups = group_items( page_nums , page_num_adjacency_check )
+    print 'numbered pages: [' + '; '.join( [ 'from {} to {}'.format( group[ 0 ] , group[ -1 ] )for group in groups ] ) + ']'
                 
-    for page in pages : page.text = '\n\n'.join( page.paras )
-    
-    return pages

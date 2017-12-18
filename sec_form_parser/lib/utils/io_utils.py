@@ -11,12 +11,9 @@ import urllib2
 
 
 
-def prepare_save_path( save_path ) :
-
-    save_dir = os.path.dirname( save_path )
-
-    if not save_dir : pass # save_dir is the current directory
-    elif not os.path.isdir( save_dir ) : os.makedirs( save_dir ) 
+################################################################
+## I/O-related utility functions intended for use by the user ##
+################################################################
 
 
 
@@ -99,3 +96,18 @@ def download( url , debug = False ) :
     raw = response.read( )
     
     return raw
+
+
+
+#######################################################
+## Helper functions not intended for use by the user ##
+#######################################################
+
+
+
+def prepare_save_path( save_path ) :
+
+    save_dir = os.path.dirname( save_path )
+
+    if not save_dir : pass # save_dir is the current directory
+    elif not os.path.isdir( save_dir ) : os.makedirs( save_dir ) 

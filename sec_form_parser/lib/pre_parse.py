@@ -3,6 +3,7 @@ import sys
 
 
 from utils.utils import *
+from utils.text_utils import *
 from classes import HtmlNode
 
 
@@ -27,27 +28,6 @@ def pre_parse( text ) :
     return text
 
 
-
-special_char_re = re.compile( r'&(?P<code>.{1,6}?);' , re.S )
-special_char_map = dict( [ ( k , v ) for ks , v in [ ( [ 'nbsp' , '#160' , '#9' ] , ' ' ) , ( [ 'amp' , '#38' ] , '&' ) , ( [ '#43' ] , ' + ' ) , ( [ 'lt' , '#60' ] , '<' ) , ( [ 'gt' , '#62' ] , '>' ) ,
-                                                     ( [ '#91' ] , ' [ ' ) , ( [ '#93' ] , ' ] ' ) , ( [ '#95' ] , '_' ) , ( [ '&rsquo' , '#145' , '#146' , '#8216' , '#8217' ] , "'" ) ,
-                                                     ( [ '&ldquo' , '&rdquo' ,  'quot' , '#147' , '#148' , '#8220' , '#8221' ] , '"' ) , ( [ '#150' , '#151' , '#8212' ] , ' - ' ) ] for k in ks ] )
-
-def special_char_sub( m ) :    
-    code = m.group( 'code' )
-    if code.startswith( '#' ) :
-        if code[ 1 : ].startswith( 'x' ) and code[ 2 : ].isdigit( ) : code = '#' + str( int( code[ 2 : ] ) ) # hex to dec
-        elif code[ 1 : ].isdigit( ) : code = '#' + str( int( code[ 1 : ] ) ) # remove leading zeros
-    sub = special_char_map[ code ] if code in special_char_map else ' '
-    return sub 
-
-
-
-tag_re = re.compile( r'(<(?P<tag>/?[!a-z]\w*)(?P<attrs>[^<>]*)>)' , re.I )
-junk_nl_re = re.compile( r'\s*\n\s*' )
-
-page_break_attr_str = r'page[^<>]*break|(?<=[^a-z])pg[^<>]*brk'
-non_discardable_block_tag_str = r'dir|dl|ol|pre|table|ul'
 
 childless_tag_re = re.compile( r'^(!--|br|hr|page)$' , re.I )
 
@@ -81,15 +61,15 @@ def get_html_tree( text ) :
         
         if i % 2 == 0 or node.tag == 'pre' and segment != '</pre>' :
             
-            segment = special_char_re.sub( special_char_sub , segment )
-            if node.tag != 'pre' : segment = junk_nl_re.sub( ' ' , segment )
+            segment = replace_special_chars( segment )
+            if node.tag != 'pre' : segment = junky_nl_re.sub( ' ' , segment )
             node.children.append( segment )
         
         else :
             
             m = tag_re.match( segment )
             tag = m.group( 'tag' ).lower( )
-            attrs = special_char_re.sub( special_char_sub , m.group( 'attrs' ) )
+            attrs = replace_special_chars( m.group( 'attrs' ) )
             
             if tag == 'html' : continue
                         
@@ -98,6 +78,7 @@ def get_html_tree( text ) :
                 while begin_node and begin_node.tag != tag[ 1 : ] : begin_node = begin_node.parent
                 if begin_node : node = begin_node.parent
             else :
+                if node.tag == '!--' and not page_break_attr_re.search( node.attrs ) : continue
                 if node.tag == tag and non_nestable_tag_re.match( tag ) : node = node.parent
                 node.children.append( HtmlNode( node , tag , attrs ) )
                 if not childless_tag_re.match( tag ) : node = node.children[ -1 ]           
@@ -156,16 +137,13 @@ def get_interm_repr_rec( node , caps = False ) :
 
 
 
-page_num_str = r'([A-Z]{1,3} *-? *)?\d{1,3}'
-
 untagged_non_html_page_sep0_re = re.compile( r'(^|(?<=\n)) *(?P<footer_page_num>' + page_num_str + ') *\n+ *(?P<header_page_num>page *' + page_num_str + ') *((?=\n)|$)' , re.I )
 untagged_non_html_page_sep0_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n{}\n\n'.format( m.group( 'footer_page_num' ) , m.group( 'header_page_num' ) )
 
 untagged_non_html_page_sep1_re = re.compile( r'(^|(?<=\n)) *<page *(?P<footer_page_num>' + page_num_str + ') *> *((?=\n)|$)' , re.I )
 untagged_non_html_page_sep1_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n'.format( m.group( 'footer_page_num' ) )
 
-table_re = re.compile( r'<table( [^<>]*)?>(?P<body>.*?)</table>' , re.I | re.S )
-num_in_table_str = r'[\$\(]?\d([\d,\.]*\d)?[%\)]?'
+num_in_table_str = r'\(\s*[\d\.,]+\s*\)|\$\s*[\d\.,]+|[\d\.,]+\s*%|\d+,\d+'
 line_in_table_str = r'( *|[^\n]* )' + num_in_table_str + r'(  +' + num_in_table_str + r')+ *'
 untagged_non_html_table_re = re.compile( r'(^|(?<=\n))' + line_in_table_str + r'(\n([^\n]*\n)?' + line_in_table_str + r')+((?=\n)|$)' , re.I )
 
@@ -175,7 +153,7 @@ non_html_tag_re = re.compile( r'<(/?table|page)>' , re.I )
 
 def pre_parse_non_html( text ) :
     
-    text = special_char_re.sub( special_char_sub , text )
+    text = replace_special_chars( text )
     
     text = untagged_non_html_page_sep0_re.sub( untagged_non_html_page_sep0_sub_func , text )
     text = untagged_non_html_page_sep1_re.sub( untagged_non_html_page_sep1_sub_func , text )

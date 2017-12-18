@@ -106,7 +106,7 @@ def download_10K_docs( url_from_index ) :
         for doc_m in doc_re.finditer( raw_text ) :        
 	    doc = doc_m.group( )
 	    doc_type = doc_type_re.search( doc ).group( 'type' ).strip( )    
-	    if ( doc_type != '10-K' or doc_pdf_re.search( doc ) ) and not doc_type.startswith( 'EX-13' ) : continue	    
+	    if doc_type != '10-K' and not doc_type.startswith( 'EX-13' ) or doc_pdf_re.search( doc ) : continue	    
 	    doc_type_to_doc_map[ doc_type ] = doc
     
     return doc_type_to_doc_map
@@ -125,7 +125,7 @@ def extract_10K_docs( text ) :
         
         doc = doc_m.group( )
         doc_type = doc_type_re.search( doc ).group( 'type' ).strip( )    
-        if ( doc_type != '10-K' or doc_pdf_re.search( doc ) ) and not doc_type.startswith( 'EX-13' ) : continue
+        if doc_type != '10-K' and not doc_type.startswith( 'EX-13' ) or doc_pdf_re.search( doc ) : continue
         doc_text = doc_text_re.search( doc ).group( 'text' )        
         doc_type_to_text_map[ doc_type ] = doc_text
     

@@ -1,6 +1,11 @@
-# Use this file to first download SEC indexes, then filter and combine those indexes,
-# and finally download the relevant docs within 10-K forms.
-# This file demonstrates the use of download-related tools in the library.
+# download_all.py
+# Author: Rhaad M. Rabbani (2017)
+
+# This file demonstrates use of download-related tools in the library.
+# Specifically, it demonstrates:
+# (i) downloading SEC form filing indexes;
+# (ii) filtering indexes by CIK (read from a csv file) and form-type (10-K), and combining to generate a single index file; and
+# (iii) downloading 10-K forms.
 
 
 
@@ -12,6 +17,7 @@ from collections import defaultdict
 sys.path.append('../lib')
 from utils.utils import *
 from utils.io_utils import *
+from utils.text_utils import *
 from download import download_indexes , combine_indexes , download_10K_docs
 
 
@@ -38,14 +44,16 @@ if __name__ == '__main__' :
     
     # Keep only the first (since 2006) and the last 10-K per CIK to reduce the total number of files we handle in this example
     
+    headers , rows = load_csv( combined_index_path , headers = [ 'CIK' , 'Company Name' ,'Date Filed' , 'Filename' ] , debug = True )    
+    
     cik_to_rows_map = defaultdict( list )
-    headers , rows = load_csv( combined_index_path , headers = [ 'CIK' , 'Company Name' ,'Date Filed' , 'Filename' ] , debug = True )
     for row in rows :
         if row[ 2 ] >= '2006-01-01' : cik_to_rows_map[ int( row[ 0 ] ) ].append( row )
     rows = [ row for cik in sorted( cik_to_rows_map ) for row in cik_to_rows_map[ cik ][ : 1 ] + cik_to_rows_map[ cik ][ -1 : ] ]
     
     
-    # Download relevant docs from 10-K forms and save
+    # Each 10-K filing consists of several documents
+    # Download relevant docs from 10-K forms (docs of type 10-K and EX-13x) and save
     
     for cik , name , date , filename in rows :
         if os.path.isfile( '{}/{}_{}_10-K.txt'.format( form_downloads_dir , cik , date ) ) : continue        
@@ -54,5 +62,5 @@ if __name__ == '__main__' :
             save_text( '{}/{}_{}_{}.txt'.format( form_downloads_dir , cik , date , doc_type ) , doc , debug = True )
             
             
-    # You may now proceed to run parse_all.py or parse_one.py
+    # We may now proceed to run parse_all.py
     
