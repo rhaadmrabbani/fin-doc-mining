@@ -4,6 +4,8 @@ sec_form_parser is a python library that can be used to download and parse SEC<s
 
 <sup>[1]</sup> The SEC (The US Securities and Exchange Commission) requires every publicly-traded US company to file form 10-K, an annual report to shareholders, and a host of other forms.
 
+We are a research group based at Rensselaer Polytechnic Institute in Troy, New York. We hope sec_form_parser
+
 <br>
 
 <h2>Getting Started</h2>
@@ -52,7 +54,7 @@ Currently, we only provide page-parsing for EX-13x, but no section parsing.
 The parsing this library currently performs can be broken into three stages:
 <ol>
 <li>pre-parsing,</li>
-<li>parsing pages,<.li>
+<li>parsing pages,</li>
 <li>parsing sections.</li>
 </ol>
 
@@ -62,9 +64,12 @@ The page parser relies on page separation tags. During page and section parsing 
 
 It is extremely important not to break up tables, html lists, etc when splitting the text. Otherwise, the likelihood of encountering "fake" page separators and section headers dramatically increases.
 
+The functions <code>pre_parse</code>, <code>parse_pages</code>, and <code>parse_sections</code> can be found in <code>lib/pre_parse.py</code>, <code>lib/parse_pages.py</code>, and <code>lib/parse_sections.py</code> respectively.
+
 <br>
 
 <h2>Upcoming features</h2>
-
-(i) Additional library for performing pre-processing of text using Python's Natural Language Toolkit (NLTK)
-(ii) Parsing table of contents, and locating 10-K sections that are not in their default positions
+<ol>
+<li>Additional library for performing pre-processing of text using Python's Natural Language Toolkit (NLTK)</li>
+<li>Parsing table of contents, and locating 10-K sections that are not in their default positions</li>
+</ol>
