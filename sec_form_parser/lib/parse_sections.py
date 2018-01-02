@@ -51,7 +51,7 @@ def parse_sections( pages , debug = False ) :
 
 
 
-section_header0_re = re.compile( '^\s*(item +(?P<item_num>\d+[a-z]?)[\. :]|part +(?P<part_num>i[iv]*)|signatures).*?$' , re.I | re.S )
+section_header0_re = re.compile( '^\s*(item *(?P<item_num>\d+[a-z]?)[\. :]|part +(?P<part_num>i[iv]*)|signatures).*?$' , re.I | re.S )
 item_re = re.compile( r'item' , re.I )
 
 
