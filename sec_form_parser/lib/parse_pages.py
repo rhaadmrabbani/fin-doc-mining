@@ -78,13 +78,26 @@ def parse_pages( text , debug = False ) :
         changed = build_header_texts( pages )
         if not changed : break
     
-    # mend paragraphs broken across page seps
+    # remove empty pages
+    i = 1
+    while i < len( pages ) :
+        if not pages[ i ].text_segments and ( not pages[ i - 1 ].footer_page_num or not pages[ i ].footer_page_num ) :
+            pages[ i - 1 ].footer_page_num = pages[ i - 1 ].footer_page_num or pages[ i ].footer_page_num
+            pages[ i - 1 ].footer += pages[ i ].header + pages[ i ].footer
+            pages.pop( i )
+            continue
+        i += 1
+ 
     for page in pages :
         page.text = join_lines( [ segment.text for segment in page.text_segments ] )
-        page.text_segments = [ TextSegment( para ) for para in split_paras( page.text ) ]
+        page.text_segments = [ TextSegment( para ) for para in split_paras( page.text ) ]    
+    
+    # mend paragraphs broken across page seps
     i = 0
     while i + 1 < len( pages ) :
-        if pages[ i ].text_segments and pages[ i + 1 ].text_segments and broken_para_re.search( pages[ i ].text_segments[ -1 ].text ) :
+        if pages[ i ].text_segments and pages[ i + 1 ].text_segments \
+           and not false_broken_para_end_re.search( pages[ i ].text_segments[ -1 ].tag_masked_text ) \
+           and not false_broken_para_start_re.search( pages[ i + 1 ].text_segments[ 0 ].tag_masked_text ) :
             pages[ i ].text_segments[ -1 ].text += '\n' + pages[ i + 1 ].text_segments[ 0 ].text
             pages[ i + 1 ].text_segments.pop( 0 )
         i += 1
@@ -108,14 +121,16 @@ page_sep_tag_re = re.compile( r'^\s*(<(page|[^<>]*?(' + page_break_attr_str + r'
 
 footer_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|continued\s+on\s+next\s+page)\s*$' , re.I )
 
-header_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|[^\n]*(continued)[^\n]*)\s*$' , re.I )
+header_re = re.compile( r'^\s*(<(hr|!--)(\s[^<>]*)?>|[^\n]*\(continued\)[^\n]*)\s*$' , re.I )
 
-page_num_line_res = [ re.compile( r'^\s*(- *)?(?P<page_num>' + page_num_str + r')( *-)?\s*$' , re.I ) ,
-                      re.compile( r'^\s*page +(?P<page_num>' + page_num_str + r')( +of +\d+)?\s*$' , re.I ) ]
+page_num_line_res = [ re.compile( r'^\s*(- *){0,2}(?P<page_num>' + page_num_str + r')( *-){0,2}\s*$' , re.I ) ,
+                      re.compile( r'^\s*page( *- *| +)(?P<page_num>' + page_num_str + r')( +of +\d+)?\s*$' , re.I ) ]
 
 non_discardable_block_tag_re = re.compile( r'(^|(?<=\n))\s*<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)>\s*((?=\n)|$)' , re.I | re.S )
 
-broken_para_re = re.compile( r'[^\.>\s\'"][\s\'"]*$' )
+false_broken_para_end_re = re.compile( r'[\.\'"]\s*$' )
+
+false_broken_para_start_re = re.compile( r'^\s*item *\d' , re.I )
 
 
 
@@ -261,8 +276,8 @@ def print_page_nums( pages ) :
 
 collapsable_block_re = re.compile( r'\s(' + num_in_table_str + r')\s+(-+\s+)?(' + num_in_table_str + r')\s|\s(\d+\s+){3}' )
 
-texty_page_num_line_res = [ re.compile( r'^\s*(page +)?(?P<page_num>' + page_num_str + r')\s+(?P<text>.*?)\s*$' , re.I | re.S ) , 
-                            re.compile( r'^\s*(?P<text>.*?)\s+(page +)?(?P<page_num>' + page_num_str + r')\s*$' , re.I | re.S ) ]
+texty_page_num_line_res = [ re.compile( r'^\s*(page( *- *| +))?(?P<page_num>' + page_num_str + r')( *- *|\s+)(?P<text>.*?)\s*$' , re.I | re.S ) , 
+                            re.compile( r'^\s*(?P<text>.*?)( *- *|\s+)(page( *- *| +))?(?P<page_num>' + page_num_str + r')\s*$' , re.I | re.S ) ]
 
 page_num_re = re.compile( r'^(?P<pre>.*?)(?P<num>\d+)$' )
 
