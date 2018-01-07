@@ -39,7 +39,7 @@ def parse_sections( pages , debug = False ) :
     for k in range( len( matches ) - 1 ) :
         m1 , i1 , j1 , para1 = matches[ k ]
         m2 , i2 , j2 , para2 = matches[ k + 1 ]
-        item_num = m1.group( 'item_num' )
+        item_num = m1.group( 'item_num' ) if not m1.group( 'bad_1' ) else '1' + m1.group( 'item_num' )[ 1 : ]
         if item_num :
             item_num = item_num.upper( )
             if i1 == i2 : paras = pages[ i1 ].paras[ j1 + 1 : j2 ]
@@ -51,7 +51,7 @@ def parse_sections( pages , debug = False ) :
 
 
 
-section_header0_re = re.compile( '^\s*(item *(?P<item_num>\d{1,2}[a-z]?)[\.\s:]|part +(?P<part_num>i[iv]*)|signatures).*?$' , re.I | re.S )
+section_header0_re = re.compile( '^\s*(item *(?P<item_num>((?P<bad_1>i)|\d)\d?[a-e]?)[\.\s:]|part +(?P<part_num>i[iv]*)|signatures).*?$' , re.I | re.S )
 item_re = re.compile( r'item' , re.I )
 
 

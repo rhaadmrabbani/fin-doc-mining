@@ -31,7 +31,7 @@ def pre_parse( text ) :
     text = multi_nl_re.sub( '\n\n' , text )
     text = text.strip( '\n' ) + '\n'
     
-    text = ( pre_parse_html if is_html_re.search( text ) else pre_parse_non_html )( text )  
+    text = ( pre_parse_html if is_html_re.search( text ) else pre_parse_non_html )( text )
     
     return text
 

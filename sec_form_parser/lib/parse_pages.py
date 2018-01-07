@@ -52,15 +52,7 @@ def parse_pages( text , debug = False ) :
     changed = build_footer_page_nums( pages )
     if changed : build_footers( pages )
     
-    # remove empty pages
-    i = 1
-    while i < len( pages ) :
-        if not pages[ i ].text_segments and ( not pages[ i - 1 ].footer_page_num or not pages[ i ].footer_page_num ) :
-            pages[ i - 1 ].footer_page_num = pages[ i - 1 ].footer_page_num or pages[ i ].footer_page_num
-            pages[ i - 1 ].footer += pages[ i ].footer
-            pages.pop( i )
-            continue
-        i += 1
+    remove_empty_pages( pages )
     
     # merge pages across false page seps    
     i = 0
@@ -70,23 +62,13 @@ def parse_pages( text , debug = False ) :
             pages.pop( i )
             continue
         i += 1
-        
-    build_footers( pages )
     
     while True :
         build_headers( pages )
         changed = build_header_texts( pages )
         if not changed : break
     
-    # remove empty pages
-    i = 1
-    while i < len( pages ) :
-        if not pages[ i ].text_segments and ( not pages[ i - 1 ].footer_page_num or not pages[ i ].footer_page_num ) :
-            pages[ i - 1 ].footer_page_num = pages[ i - 1 ].footer_page_num or pages[ i ].footer_page_num
-            pages[ i - 1 ].footer += pages[ i ].header + pages[ i ].footer
-            pages.pop( i )
-            continue
-        i += 1
+    remove_empty_pages( pages )
  
     for page in pages :
         page.text = join_lines( [ segment.text for segment in page.text_segments ] )
@@ -95,7 +77,8 @@ def parse_pages( text , debug = False ) :
     # mend paragraphs broken across page seps
     i = 0
     while i + 1 < len( pages ) :
-        if pages[ i ].text_segments and pages[ i + 1 ].text_segments \
+        if pages[ i ].text_segments and not non_discardable_block_tag_re.match( pages[ i ].text_segments[ -1 ].text ) \
+           and pages[ i + 1 ].text_segments and not non_discardable_block_tag_re.match( pages[ i + 1 ].text_segments[ 0 ].text ) \
            and not false_broken_para_end_re.search( pages[ i ].text_segments[ -1 ].tag_masked_text ) \
            and not false_broken_para_start_re.search( pages[ i + 1 ].text_segments[ 0 ].tag_masked_text ) :
             pages[ i ].text_segments[ -1 ].text += '\n' + pages[ i + 1 ].text_segments[ 0 ].text
@@ -152,6 +135,19 @@ def collapse_blocks( text ) :
     text = ''.join( segments )
     
     return text
+
+
+
+def remove_empty_pages( pages ) :
+    
+    i = 1
+    while i < len( pages ) :
+        if not pages[ i ].text_segments and ( not pages[ i - 1 ].footer_page_num or not pages[ i ].footer_page_num ) :
+            pages[ i - 1 ].footer_page_num = pages[ i - 1 ].footer_page_num or pages[ i ].footer_page_num
+            pages[ i - 1 ].footer += pages[ i ].header + pages[ i ].footer
+            pages.pop( i )
+            continue
+        i += 1
 
 
 

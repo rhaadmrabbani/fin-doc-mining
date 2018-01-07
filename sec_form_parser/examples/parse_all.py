@@ -38,9 +38,12 @@ key_to_sort_filenames_by_cik = lambda name : int( name.split( '_' , 1 )[ 0 ] )
 if __name__ == '__main__' :
     
     
+    filenames = sorted( os.listdir( form_downloads_dir ) , key = key_to_sort_filenames_by_cik )
+    
+    
     # Pre-parse to generate easy-to-read intermediate representation.
     
-    for filename in sorted( os.listdir( form_downloads_dir ) , key = key_to_sort_filenames_by_cik ) :
+    for filename in filenames :
         
         save_path = interm_repr_dir + '/' + filename
         if os.path.isfile( save_path ) : continue
@@ -64,7 +67,7 @@ if __name__ == '__main__' :
     # Feed document text to page parser to obtain pages,
     # then feed pages to section parser to obtain sections.
     
-    for filename in sorted( os.listdir( interm_repr_dir ) , key = key_to_sort_filenames_by_cik ) :
+    for filename in filenames :
         
         print filename
         
