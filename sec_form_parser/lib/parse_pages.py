@@ -46,7 +46,7 @@ def parse_pages( text , debug = False ) :
             pages[ -1 ].footer.append( segment )
             pages.append( Page( ) )
         else :
-            pages[ -1 ].text_segments.append( segment )    
+            pages[ -1 ].text_segments.append( segment )
     
     build_footers( pages )
     changed = build_footer_page_nums( pages )
@@ -72,7 +72,7 @@ def parse_pages( text , debug = False ) :
  
     for page in pages :
         page.text = join_lines( [ segment.text for segment in page.text_segments ] )
-        page.text_segments = [ TextSegment( para ) for para in split_paras( page.text ) ]    
+        page.text_segments = [ TextSegment( para ) for para in split_paras( page.text ) ]
     
     # mend paragraphs broken across page seps
     i = 0

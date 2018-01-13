@@ -69,7 +69,7 @@ def combine_indexes( load_dir , save_path , filter_ciks = None , filter_form_typ
 
 
 
-div_re = re.compile( r'<tr[^>]*>\s*(<td[^>]*>[^<]*</td>\s*){2}<td[^>]*><a href="(?P<url>[^"]*\.txt)">\s*[^\s<]+\s*</a></td>\s*<td[^>]*>(?P<doc_type>10-K|EX-13[^<]*)</td>' )
+div_re = re.compile( r'<tr[^>]*>\s*(<td[^>]*>[^<]*</td>\s*){2}<td[^>]*><a href="(?P<url>[^"]*\.(txt|html?))">\s*[^\s<]+\s*</a></td>\s*<td[^>]*>(?P<doc_type>10-K|EX-13[^<]*)</td>' )
 
 doc_re = re.compile( r'<document>(?P<doc>.*?)</document>' , re.I | re.S )
 

@@ -61,7 +61,7 @@ def join_lines( lines ) : return '\n'.join( lines )
 
 # Utility function that splits text into paras, preserving blocks, e.g. table, pre, etc
 
-def split_paras( text ) : return [ m.group( ) for m in para_re.finditer( text ) ]
+def split_paras( text ) : return [ m.group( ).strip( '\n' ) for m in para_re.finditer( text ) ]
 
 
 
@@ -79,7 +79,7 @@ def replace_special_chars( text ) : return special_char_re.sub( special_char_sub
 
 line_re = re.compile( r'(^|(?<=\n))( *<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n)|$)' , re.I | re.S )
 
-para_re = re.compile( r'(^|(?<=\n\n))( *<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n\n)|$)' , re.I | re.S )
+para_re = re.compile( r'(^|(?<=\n\n))(\s*<(?P<tag>' + non_discardable_block_tag_str + r')(\s[^<>]*)?>.*?</(?P=tag)> *|.*?)((?=\n\n)|$)' , re.I | re.S )
 
     
 

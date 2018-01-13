@@ -73,7 +73,7 @@ def get_html_tree( text ) :
         
         if not node : break
         
-        if i % 2 == 0 or node.tag == 'pre' and segment != '</pre>' :
+        if i % 2 == 0 or node.tag == 'pre' and segment.lower( ) != '</pre>' :
             
             segment = replace_special_chars( segment )
             if node.tag != 'pre' : segment = junky_nl_re.sub( ' ' , segment )
@@ -178,9 +178,9 @@ untagged_non_html_page_sep0_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n{}\n\n'.f
 untagged_non_html_page_sep1_re = re.compile( r'(^|(?<=\n)) *<page *(?P<footer_page_num>' + page_num_str + ') *> *((?=\n)|$)' , re.I )
 untagged_non_html_page_sep1_sub_func = lambda m : '\n\n{}\n\n<PAGE>\n\n'.format( m.group( 'footer_page_num' ) )
 
-num_in_table_str = r'\(\s*[\d\.,]+\s*\)|\$\s*[\d\.,]+|[\d\.,]+\s*bps|[\d\.,]+\s*%|\d+,\d+'
-line_in_table_str = r'( *|[^\n]* )' + num_in_table_str + r'(  +' + num_in_table_str + r')+ *'
-untagged_non_html_table_re = re.compile( r'(^|(?<=\n))' + line_in_table_str + r'(\n([^\n]*\n)?' + line_in_table_str + r')+((?=\n)|$)' , re.I )
+num_in_table_str = r'\(\s*[\d\.,]+\s*\)|\$\s*[\d\.,]+|[\d\.,]+\s*bps|[\d\.,]+\s*%|\d+,\d+|\d{3,}'
+line_in_table_str = r'([^\n]* )??(' + num_in_table_str + r')(  +(' + num_in_table_str + r'))+( [^\n]*)?| *[-=][-= ]*[-=] *'
+untagged_non_html_table_re = re.compile( r'(^|(?<=\n\n))([^\n]+\n)*?(' + line_in_table_str + r')(\n([^\n]*\n)?(' + line_in_table_str + r'))+((?=\n)|$)' , re.I )
 
 non_html_tag_re = re.compile( r'<(/?table|page)>' , re.I )
 

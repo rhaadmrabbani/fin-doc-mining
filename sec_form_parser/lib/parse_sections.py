@@ -24,26 +24,37 @@ def parse_sections( pages , debug = False ) :
     
     matches = [ ]
     
-    for i , page in enumerate( pages ) :
-        for j , para in enumerate( page.paras ) :
+    for page_id , page in enumerate( pages ) :
+        for para_id , para in enumerate( page.paras ) :
             text = tag_re.sub( '' , para )
-            m = section_header0_re.match( text )
-            if m and len( list( item_re.finditer( text ) ) ) <= 1 : matches.append( ( m , i , j , para ) )
+            m = section_header0_re.search( text )
+            if m and len( list( item_re.finditer( text ) ) ) <= 1 :
+                body_para_id = None
+                if m.group( 'item_num' ) :
+                    body_para_id = para_id + ( 2
+                                               if para_id + 1 < len( page.paras )
+                                               and m.group( 'item_num' )
+                                               and not ( m.group( 'title' ) and m.group( 'title' ).strip( ) )
+                                               and title_re.search( tag_re.sub( '' , page.paras[ para_id + 1 ] ) )
+                                               else 1 )
+                matches.append( ( m , page_id , para_id , body_para_id ) )
     
     if debug :
-        for m , i , j , para in matches :
-            print i , ( pages[ i ].header_page_num , pages[ i ].footer_page_num ) , [ para ]
+        for m , page_id , para_id , body_para_id in matches :
+            print page_id , ( pages[ page_id ].header_page_num , pages[ page_id ].footer_page_num ) , pages[ page_id ].paras[ para_id : body_para_id if body_para_id else para_id + 1 ]
     
     item_num_to_text_map = defaultdict( str )
     
-    for k in range( len( matches ) - 1 ) :
-        m1 , i1 , j1 , para1 = matches[ k ]
-        m2 , i2 , j2 , para2 = matches[ k + 1 ]
-        item_num = m1.group( 'item_num' ) if not m1.group( 'bad_1' ) else '1' + m1.group( 'item_num' )[ 1 : ]
+    for m_id in range( len( matches ) - 1 ) :
+        m1 , page_id1 , para_id1 , body_para_id1 = matches[ m_id ]
+        m2 , page_id2 , para_id2 , body_para_id2 = matches[ m_id + 1 ]
+        item_num = m1.group( 'item_num' )
         if item_num :
+            item_num = item_num if not m1.group( 'bad_1' ) else '1' + item_num[ 1 : ]
+            item_num = re.sub( r'[ \.]' , '' , item_num )
             item_num = item_num.upper( )
-            if i1 == i2 : paras = pages[ i1 ].paras[ j1 + 1 : j2 ]
-            else : paras = pages[ i1 ].paras[ j1 + 1 : ] + [ para for page in pages[ i1 + 1 : i2 ] for para in page.paras ] + pages[ i2 ].paras[ : j2 ]
+            if page_id1 == page_id2 : paras = pages[ page_id1 ].paras[ body_para_id1 : para_id2 ]
+            else : paras = pages[ page_id1 ].paras[ body_para_id1 : ] + [ para for page in pages[ page_id1 + 1 : page_id2 ] for para in page.paras ] + pages[ page_id2 ].paras[ : para_id2 ]
             text = join_paras( paras )
             item_num_to_text_map[ item_num ] = ( item_num_to_text_map[ item_num ] + '\n\n' + text ).strip( '\n' )
             
@@ -51,8 +62,9 @@ def parse_sections( pages , debug = False ) :
 
 
 
-section_header0_re = re.compile( '^\s*(item *(?P<item_num>((?P<bad_1>i)|\d)\d?[a-e]?)[\.\s:]|part +(?P<part_num>i[iv]*)|signatures).*?$' , re.I | re.S )
+section_header0_re = re.compile( '^\s*(item\s*(?P<item_num>((?P<bad_1>i)|\d)\d?[ \.]*[a-e]?)([-\.:\s]\s*(?P<title>.*))?\s*$|part +(?P<part_num>i[iv]*)|signatures)' , re.I | re.S )
 item_re = re.compile( r'item' , re.I )
+title_re = re.compile( r'^\s*[A-Z]\S*( +([A-Z]\S*|\S{1,5}))*\s*$' )
 
 
 
